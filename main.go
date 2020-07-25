@@ -4,9 +4,9 @@ Convert formatted text to Date + Data rows asynchronously
 
 Usage:
 ```
-# No option
+# Dump table
 # Dump txt to SAtrace format data
-$ satrace *.txt
+$ satrace table *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
 
@@ -82,11 +82,9 @@ type (
 	Command interface {
 		// Convert formatted text to Date + Data rows asynchronously
 		Help() string
+		Table(args []string) int
 		Elen(args []string) int
 	}
-	// ElenCommand command definition
-	// type Elen struct{}
-	ElenCommand struct{}
 )
 
 func main() {
@@ -105,12 +103,14 @@ func main() {
 	c.Args = os.Args[1:]
 	// Subcommands register
 	c.Commands = map[string]cli.CommandFactory{
+		"table": func() (cli.Command, error) {
+			return &TableCommand{}, nil
+		},
 		"elen": func() (cli.Command, error) {
 			return &ElenCommand{}, nil
 		},
 	}
 
-	// ElenCommand{}.writeBuffer(files)
 	exitCode, err := c.Run()
 	if err != nil {
 		fmt.Printf("Failed to execute: %s\n", err.Error())
@@ -118,9 +118,95 @@ func main() {
 	os.Exit(exitCode)
 }
 
+/* Table subcommand */
+
+// TableCommand command definition
+type TableCommand struct{}
+
+// Synopsis message of `satrace table`
+func (e *TableCommand) Synopsis() string {
+	return "satrace subcommand table"
+}
+
+// Help message of `satrace table`
+func (e *TableCommand) Help() string {
+	return "usage: satrace table data/*.txt"
+}
+
+// Run print result of writeOutRow()
+func (e *TableCommand) Run(args []string) int {
+	flags := flag.NewFlagSet("table", flag.ContinueOnError)
+	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
+	flags.BoolVar(&debug, "debug", false, "Debug mode")
+	if err := flags.Parse(args); err != nil {
+		return 1
+	}
+	for _, filename := range flags.Args() {
+		// File not exist then next loop so that filtering here
+		// flags.Args() contains all flag and filename args
+		if _, err := os.Stat(filename); err != nil {
+			continue
+		}
+		wg.Add(1)
+		go func(f string) {
+			defer wg.Done()
+			var err error
+			o, err := e.writeOutRow(f)
+			if err != nil {
+				panic(err)
+			}
+			logger.Println(o)
+		}(filename)
+	}
+	wg.Wait()
+	return 0
+}
+
+// writeOutRow return a line of processed content
+func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
+	var (
+		config  configMap
+		content contentArray
+		// m, n    int
+	)
+	o.Filename = s
+	o.Datetime = parseDatetime(filepath.Base(s))
+	config, content, err = readTrace(s)
+	if err != nil {
+		return
+	}
+	if debug {
+		logger.Printf("[ CONFIG ]:%v\n", config)
+		logger.Printf("[ CONTENT ]:%v\n", content)
+		logger.Printf("[ FIELD ]:%v\n", field)
+	}
+	o.Center = config[":FREQ:CENT"]
+	// for _, f := range field {
+	// 	m, n, err = parseField(f)
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// 	mw := content.signalBand(m, n)
+	// 	o.Fields = append(o.Fields, mw)
+	// }
+	o.Fields = content
+	// Debug print format
+	if debug {
+		logger.Printf("[ TYPE OUTROW ]%v\n", o)
+		// continue // print not standard output
+		return
+	}
+	return
+}
+
+/* Elen subcommand */
+
+// ElenCommand command definition
+type ElenCommand struct{}
+
 // Synopsis message of `satrace elen`
 func (e *ElenCommand) Synopsis() string {
-	return "elen Synopsis"
+	return "satrace subcommand elen"
 }
 
 // Help message of `satrace elen`
@@ -137,9 +223,9 @@ func (e *ElenCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
-
 	for _, filename := range flags.Args() {
-		// File not exist then next loop
+		// File not exist then next loop so that filtering here
+		// flags.Args() contains all flag and filename args
 		if _, err := os.Stat(filename); err != nil {
 			continue
 		}
