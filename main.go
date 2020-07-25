@@ -192,7 +192,7 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 				o.Fields = append(o.Fields, mw)
 			}
 		}
-	} else {
+	} else { // no -f flag
 		o.Fields = content
 	}
 	// Debug print format
@@ -238,7 +238,7 @@ func (e *ElenCommand) Run(args []string) int {
 		go func(f string) {
 			defer wg.Done()
 			var err error
-			o, err := writeOutRow(f)
+			o, err := e.writeOutRow(f)
 			if err != nil {
 				panic(err)
 			}
@@ -250,7 +250,7 @@ func (e *ElenCommand) Run(args []string) int {
 }
 
 // writeOutRow return a line of processed content
-func writeOutRow(s string) (o OutRow, err error) {
+func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 	var (
 		config  configMap
 		content contentArray
@@ -268,13 +268,22 @@ func writeOutRow(s string) (o OutRow, err error) {
 		logger.Printf("[ FIELD ]:%v\n", field)
 	}
 	o.Center = config[":FREQ:CENT"]
-	for _, f := range field {
-		m, n, err = parseField(f)
+	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
+		for _, f := range field {
+			m, n, err = parseField(f)
+			if err != nil {
+				return
+			}
+			mw := content.signalBand(m, n)
+			o.Fields = append(o.Fields, mw)
+		}
+	} else { // no -f flag
+		var end int
+		end, err = strconv.Atoi(config[":SWE:POIN"])
 		if err != nil {
 			return
 		}
-		mw := content.signalBand(m, n)
-		o.Fields = append(o.Fields, mw)
+		o.Fields = []float64{content.signalBand(0, end-1)}
 	}
 	// Debug print format
 	if debug {
