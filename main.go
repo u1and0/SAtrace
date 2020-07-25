@@ -136,6 +136,7 @@ func (e *TableCommand) Help() string {
 // Run print result of writeOutRow()
 func (e *TableCommand) Run(args []string) int {
 	flags := flag.NewFlagSet("table", flag.ContinueOnError)
+	flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
@@ -167,7 +168,7 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 	var (
 		config  configMap
 		content contentArray
-		// m, n    int
+		m, n    int
 	)
 	o.Filename = s
 	o.Datetime = parseDatetime(filepath.Base(s))
@@ -181,15 +182,19 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 		logger.Printf("[ FIELD ]:%v\n", field)
 	}
 	o.Center = config[":FREQ:CENT"]
-	// for _, f := range field {
-	// 	m, n, err = parseField(f)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	mw := content.signalBand(m, n)
-	// 	o.Fields = append(o.Fields, mw)
-	// }
-	o.Fields = content
+	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
+		for _, f := range field {
+			m, n, err = parseField(f) // => [[50 100] [300 350]...]
+			if err != nil {
+				return
+			}
+			for _, mw := range content[m : n+1] {
+				o.Fields = append(o.Fields, mw)
+			}
+		}
+	} else {
+		o.Fields = content
+	}
 	// Debug print format
 	if debug {
 		logger.Printf("[ TYPE OUTROW ]%v\n", o)
