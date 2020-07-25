@@ -73,12 +73,10 @@ type (
 	contentArray []float64
 	// OutRow is a output line
 	OutRow struct {
-		Filename   string
-		Datetime   string
-		Center     string
-		Fields     []float64
-		FieldRange arrayField // []string multiple flags
-		Debug      bool
+		Filename string
+		Datetime string
+		Center   string
+		Fields   []float64
 	}
 	// Command is a list of subcommand
 	Command interface {
@@ -127,7 +125,7 @@ func (e *ElenCommand) Synopsis() string {
 
 // Help message of `satrace elen`
 func (e *ElenCommand) Help() string {
-	return "elen help"
+	return "usage: satrace elen -f 50-100"
 }
 
 // Run print result of writeOutRow()
@@ -140,7 +138,6 @@ func (e *ElenCommand) Run(args []string) int {
 		return 1
 	}
 
-	o := OutRow{FieldRange: field, Debug: debug}
 	for _, filename := range flags.Args() {
 		// File not exist then next loop
 		if _, err := os.Stat(filename); err != nil {
@@ -150,7 +147,7 @@ func (e *ElenCommand) Run(args []string) int {
 		go func(f string) {
 			defer wg.Done()
 			var err error
-			o, err = o.writeOutRow(f)
+			o, err := writeOutRow(f)
 			if err != nil {
 				panic(err)
 			}
@@ -162,39 +159,39 @@ func (e *ElenCommand) Run(args []string) int {
 }
 
 // writeOutRow return a line of processed content
-func (o OutRow) writeOutRow(s string) (OutRow, error) {
-	// var (
-	// 	config  configMap
-	// 	content contentArray
-	// 	m, n    int
-	// )
+func writeOutRow(s string) (o OutRow, err error) {
+	var (
+		config  configMap
+		content contentArray
+		m, n    int
+	)
 	o.Filename = s
 	o.Datetime = parseDatetime(filepath.Base(s))
-	config, content, err := readTrace(s)
+	config, content, err = readTrace(s)
 	if err != nil {
-		return o, err
+		return
 	}
-	if o.Debug {
+	if debug {
 		logger.Printf("[ CONFIG ]:%v\n", config)
 		logger.Printf("[ CONTENT ]:%v\n", content)
-		logger.Printf("[ FIELD ]:%v\n", o.FieldRange)
+		logger.Printf("[ FIELD ]:%v\n", field)
 	}
 	o.Center = config[":FREQ:CENT"]
-	for _, f := range o.FieldRange {
-		m, n, err := parseField(f)
+	for _, f := range field {
+		m, n, err = parseField(f)
 		if err != nil {
-			return o, err
+			return
 		}
 		mw := content.signalBand(m, n)
 		o.Fields = append(o.Fields, mw)
 	}
 	// Debug print format
-	if o.Debug {
+	if debug {
 		logger.Printf("[ TYPE OUTROW ]%v\n", o)
 		// continue // print not standard output
-		return o, err
+		return
 	}
-	return o, err
+	return
 }
 
 // OutRow.String print as comma separated value
