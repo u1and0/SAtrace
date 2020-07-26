@@ -64,8 +64,7 @@ type (
 	arrayField []string
 	// configMap is a first line of data
 	configMap map[string]string
-	// contentArray read from data
-	contentArray []float64
+
 	// OutRow is a output line
 	OutRow struct {
 		Filename string
@@ -152,35 +151,34 @@ func (e *TableCommand) Run(args []string) int {
 // writeOutRow return a line of processed content
 func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 	var (
-		config  configMap
-		content contentArray
-		m, n    int
+		df   Trace
+		m, n int
 	)
 	o.Filename = s
-	o.Format = s
+	o.Format = format
 	o.Datetime = parseDatetime(filepath.Base(s))
-	config, content, err = readTrace(s, usecol)
+	df, err = readTrace(s, usecol)
 	if err != nil {
 		return
 	}
 	if debug {
-		logger.Printf("[ CONFIG ]:%v\n", config)
-		logger.Printf("[ CONTENT ]:%v\n", content)
+		logger.Printf("[ CONFIG ]:%v\n", df.Config)
+		logger.Printf("[ CONTENT ]:%v\n", df.Content)
 		logger.Printf("[ FIELD ]:%v\n", field)
 	}
-	o.Center = config[":FREQ:CENT"]
+	o.Center = df.Config[":FREQ:CENT"]
 	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
 		for _, f := range field {
 			m, n, err = parseField(f) // => [[50 100] [300 350]...]
 			if err != nil {
 				return
 			}
-			for _, mw := range content[m : n+1] {
+			for _, mw := range df.Content[m : n+1] {
 				o.Fields = append(o.Fields, mw)
 			}
 		}
 	} else { // no -f flag
-		o.Fields = content
+		o.Fields = df.Content
 	}
 	// Debug print format
 	if debug {
@@ -240,39 +238,38 @@ func (e *ElenCommand) Run(args []string) int {
 // writeOutRow return a line of processed content
 func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 	var (
-		config  configMap
-		content contentArray
-		m, n    int
+		df   Trace
+		m, n int
 	)
 	o.Filename = s
-	o.Format = s
+	o.Format = format
 	o.Datetime = parseDatetime(filepath.Base(s))
-	config, content, err = readTrace(s, usecol)
+	df, err = readTrace(s, usecol)
 	if err != nil {
 		return
 	}
 	if debug {
-		logger.Printf("[ CONFIG ]:%v\n", config)
-		logger.Printf("[ CONTENT ]:%v\n", content)
+		logger.Printf("[ CONFIG ]:%v\n", df.Config)
+		logger.Printf("[ CONTENT ]:%v\n", df.Content)
 		logger.Printf("[ FIELD ]:%v\n", field)
 	}
-	o.Center = config[":FREQ:CENT"]
+	o.Center = df.Config[":FREQ:CENT"]
 	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
 		for _, f := range field {
 			m, n, err = parseField(f)
 			if err != nil {
 				return
 			}
-			mw := content.signalBand(m, n)
+			mw := df.signalBand(m, n)
 			o.Fields = append(o.Fields, mw)
 		}
 	} else { // no -f flag
 		var end int
-		end, err = strconv.Atoi(config[":SWE:POIN"])
+		end, err = strconv.Atoi(df.Config[":SWE:POIN"])
 		if err != nil {
 			return
 		}
-		o.Fields = []float64{content.signalBand(0, end-1)}
+		o.Fields = []float64{df.signalBand(0, end-1)}
 	}
 	// Debug print format
 	if debug {
@@ -301,9 +298,9 @@ func (o OutRow) String() string {
 }
 
 // signalBand convert mWatt then sum between band
-func (c contentArray) signalBand(m, n int) (mw float64) {
+func (c Trace) signalBand(m, n int) (mw float64) {
 	for i := m; i <= n; i++ {
-		mw += db2mw(c[i])
+		mw += db2mw(c.Content[i])
 	}
 	return
 }
@@ -361,9 +358,17 @@ func db2mw(db float64) float64 {
 	return math.Pow(10, db/10)
 }
 
+// Trace is a set of config & data column read from a txt file
+type Trace struct {
+	// configMap is a first line of data
+	Config map[string]string
+	// contentArray read from data
+	Content []float64
+}
+
 // readTrace read from a filename to `config` from first line,
 // `content` from no # line.
-func readTrace(filename string, usecol int) (config configMap, content contentArray, err error) {
+func readTrace(filename string, usecol int) (df Trace, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return
@@ -379,7 +384,7 @@ func readTrace(filename string, usecol int) (config configMap, content contentAr
 	for {
 		line, _, err = reader.ReadLine()
 		if isConf { // First line is configure
-			config = parseConfig(line)
+			df.Config = parseConfig(line)
 			isConf = false
 			continue
 		}
@@ -401,6 +406,6 @@ func readTrace(filename string, usecol int) (config configMap, content contentAr
 		if err != nil {
 			return
 		}
-		content = append(content, f)
+		df.Content = append(df.Content, f)
 	}
 }

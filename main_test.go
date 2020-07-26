@@ -35,7 +35,7 @@ func Test_db2mw(t *testing.T) {
 }
 
 func Test_contentArraysignalBand(t *testing.T) {
-	f := contentArray{0, 3, 6, 10}
+	f := Trace{Content: []float64{0, 3, 6, 10}}
 	var actual string
 	actual = fmt.Sprintf("%.1f", f.signalBand(0, 2))
 	expected := "7.0" // =1+2+4
@@ -68,7 +68,7 @@ func Test_parseField(t *testing.T) {
 func Test_readTrace(t *testing.T) {
 	filename := "data/20200627_180505.txt"
 	usecol := 1
-	actualConf, actualCont, err := readTrace(filename, usecol)
+	actualDf, err := readTrace(filename, usecol)
 	if err != nil {
 		panic(err)
 	}
@@ -89,17 +89,17 @@ func Test_readTrace(t *testing.T) {
 		":POW:ATT":               "0",
 		":DISP:WIND:TRAC:Y:RLEV": "-30 dBm",
 	}
-	for k, v := range actualConf {
+	for k, v := range actualDf.Config {
 		if expectedConfig[k] != v {
 			t.Fatalf("got: %v want: %v", v, expectedConfig[k])
 		}
 	}
 
 	// Content test
-	expectedCont := []float64{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
-	for i, e := range expectedCont {
-		if actualCont[i] != e {
-			t.Fatalf("got: %v want: %v\ndump all: %v", actualCont[i], e, actualCont)
+	expectedContent := []float64{10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	for i, e := range actualDf.Content {
+		if expectedContent[i] != e {
+			t.Fatalf("got: %v want: %v\ndump all: %v", actualDf.Content[i], e, actualDf.Content)
 		}
 	}
 }
