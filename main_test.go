@@ -5,6 +5,21 @@ import (
 	"testing"
 )
 
+func Test_OutRowString(t *testing.T) {
+	o := OutRow{
+		Filename: "filename.txt",
+		Center:   "Center MHz",
+		Datetime: "2016-8-29 17:21:34",
+		Fields:   []float64{0, 1, 2, 3},
+		Format:   "%f",
+	}
+	actual := fmt.Sprintf("%s", o)
+	expected := "2016-8-29 17:21:34,Center MHz,0.000000,1.000000,2.000000,3.000000"
+	if actual != expected {
+		t.Fatalf("got: %v want: %v", actual, expected)
+	}
+}
+
 func Test_db2mw(t *testing.T) {
 	var actual []string
 	for _, f := range []float64{0, 3, 6, 10} {

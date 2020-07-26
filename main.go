@@ -72,6 +72,7 @@ type (
 		Datetime string
 		Center   string
 		Fields   []float64
+		Format   string
 	}
 	// Command is a list of subcommand
 	Command interface {
@@ -156,6 +157,7 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 		m, n    int
 	)
 	o.Filename = s
+	o.Format = s
 	o.Datetime = parseDatetime(filepath.Base(s))
 	config, content, err = readTrace(s, usecol)
 	if err != nil {
@@ -243,6 +245,7 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 		m, n    int
 	)
 	o.Filename = s
+	o.Format = s
 	o.Datetime = parseDatetime(filepath.Base(s))
 	config, content, err = readTrace(s, usecol)
 	if err != nil {
@@ -288,7 +291,7 @@ func (o OutRow) String() string {
 		strings.Join(func() (ss []string) {
 			for _, f := range o.Fields { // convert []float64=>[]string
 				// s := strconv.FormatFloat(f, 'f', -1, 64)
-				s := fmt.Sprintf(format, f)
+				s := fmt.Sprintf(o.Format, f)
 				ss = append(ss, s)
 			}
 			return
