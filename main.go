@@ -307,11 +307,11 @@ func (c Trace) signalBand(m, n int) (mw float64) {
 
 // parseConfig convert first line of data to config map
 func parseConfig(b []byte) configMap {
+	// CHOMP snip # 20200627_180505 *RST & *CLS
+	const CHOMP = 2
 	config := make(configMap)
 	sarray := bytes.Split(b, []byte(";"))
-	// snip # 20200627_180505 *RST & *CLS
-	// chomp last new line
-	sa := sarray[2 : len(sarray)-1]
+	sa := sarray[CHOMP : len(sarray)-1] // chomp last new line
 	for _, e := range sa {
 		kv := strings.Fields(string(e))
 		config[kv[0]] = strings.Join(kv[1:], " ")
