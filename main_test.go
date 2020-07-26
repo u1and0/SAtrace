@@ -1,17 +1,17 @@
 package main
 
 import (
-	"math"
+	"fmt"
 	"testing"
 )
 
 func Test_db2mw(t *testing.T) {
-	var actual []float64
+	var actual []string
 	for _, f := range []float64{0, 3, 6, 10} {
-		actual = append(actual, math.Ceil(db2mw(f)))
+		actual = append(actual, fmt.Sprintf("%.3f", db2mw(f)))
 	}
 	// 10**0.1=1, 10**0.3~=1.99, 10**0.6~=3.98, 10**1=10
-	expected := []float64{1, 2, 4, 10}
+	expected := []string{"1.000", "1.995", "3.981", "10.000"}
 	for i, e := range expected {
 		if actual[i] != e {
 			t.Fatalf("got: %v want: %v\ndump all: %v", actual[i], e, actual)
@@ -19,9 +19,21 @@ func Test_db2mw(t *testing.T) {
 	}
 }
 
-// func Test_signalBand(t *testing.T) {
-// 	f := conternArray{}
-// }
+func Test_contentArraysignalBand(t *testing.T) {
+	f := contentArray{0, 3, 6, 10}
+	var actual string
+	actual = fmt.Sprintf("%.1f", f.signalBand(0, 2))
+	expected := "7.0" // =1+2+4
+	if actual != expected {
+		t.Fatalf("got: %v want: %v", actual, expected)
+	}
+	actual = fmt.Sprintf("%.1f", f.signalBand(1, 3))
+	expected = "16.0" // =2+4+10
+	if actual != expected {
+		t.Fatalf("got: %v want: %v", actual, expected)
+	}
+}
+
 func Test_readTrace(t *testing.T) {
 	filename := "data/20200627_180505.txt"
 	usecol := 1
