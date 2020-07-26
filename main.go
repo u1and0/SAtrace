@@ -42,14 +42,7 @@ import (
 	"github.com/mitchellh/cli"
 )
 
-const (
-	// VERSION info
-	VERSION = "v0.1.0"
-)
-
 var (
-	// version flag
-	showVersion bool
 	// field code
 	field arrayField
 	// usecol is column of using calculation
@@ -90,18 +83,7 @@ type (
 )
 
 func main() {
-	// flag.BoolVar(&showVersion, "v", false, "Show version")
-	// flag.Var(&field, "f", "Field range such as -f 50-100")
-	// flag.IntVar(&usecol, "c", 1, "Column of using calculation")
-	// flag.StringVar(&delim, "d", "\t", "A character of separated delimeter")
-	// flag.BoolVar(&debug, "debug", false, "Debug mode")
-	// flag.Parse()
-	// if showVersion {
-	// 	fmt.Println("satrace version:", VERSION)
-	// 	return // Exit with version info
-	// }
-	//
-	c := cli.NewCLI("satrace", "0.1.0") // subcommand struct
+	c := cli.NewCLI("satrace", "0.1.0") // subcommand struct + version
 	c.Args = os.Args[1:]
 	// Subcommands register
 	c.Commands = map[string]cli.CommandFactory{
