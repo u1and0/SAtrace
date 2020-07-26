@@ -55,6 +55,8 @@ var (
 	// usecol is column of using calculation
 	usecol int
 	// logger print to stdout
+	format string
+	// logger print to stdout
 	delim string
 	// debug mode
 	debug bool
@@ -138,6 +140,7 @@ func (e *TableCommand) Run(args []string) int {
 	flags := flag.NewFlagSet("table", flag.ContinueOnError)
 	flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
+	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -224,6 +227,7 @@ func (e *ElenCommand) Run(args []string) int {
 	flags := flag.NewFlagSet("elen", flag.ContinueOnError)
 	flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
+	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -302,7 +306,7 @@ func (o OutRow) String() string {
 		strings.Join(func() (ss []string) {
 			for _, f := range o.Fields { // convert []float64=>[]string
 				// s := strconv.FormatFloat(f, 'f', -1, 64)
-				s := fmt.Sprintf("%e", f)
+				s := fmt.Sprintf(format, f)
 				ss = append(ss, s)
 			}
 			return
