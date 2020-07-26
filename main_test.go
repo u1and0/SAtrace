@@ -34,6 +34,22 @@ func Test_contentArraysignalBand(t *testing.T) {
 	}
 }
 
+func Test_parseField(t *testing.T) {
+	actual0, actual1, err := parseField("50-100")
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+	expected0 := 50
+	expected1 := 100
+	if actual0 != expected0 {
+		t.Fatalf("got: %v want: %v", actual0, expected0)
+	}
+	if actual1 != expected1 {
+		t.Fatalf("got: %v want: %v", actual1, expected1)
+	}
+}
+
+// Include parse parseConfig(b []byte) test
 func Test_readTrace(t *testing.T) {
 	filename := "data/20200627_180505.txt"
 	usecol := 1
