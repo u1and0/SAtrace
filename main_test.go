@@ -1,9 +1,27 @@
 package main
 
 import (
+	"math"
 	"testing"
 )
 
+func Test_db2mw(t *testing.T) {
+	var actual []float64
+	for _, f := range []float64{0, 3, 6, 10} {
+		actual = append(actual, math.Ceil(db2mw(f)))
+	}
+	// 10**0.1=1, 10**0.3~=1.99, 10**0.6~=3.98, 10**1=10
+	expected := []float64{1, 2, 4, 10}
+	for i, e := range expected {
+		if actual[i] != e {
+			t.Fatalf("got: %v want: %v\ndump all: %v", actual[i], e, actual)
+		}
+	}
+}
+
+// func Test_signalBand(t *testing.T) {
+// 	f := conternArray{}
+// }
 func Test_readTrace(t *testing.T) {
 	filename := "data/20200627_180505.txt"
 	usecol := 1
