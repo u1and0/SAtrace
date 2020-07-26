@@ -175,7 +175,7 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 	)
 	o.Filename = s
 	o.Datetime = parseDatetime(filepath.Base(s))
-	config, content, err = readTrace(s)
+	config, content, err = readTrace(s, usecol)
 	if err != nil {
 		return
 	}
@@ -262,7 +262,7 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 	)
 	o.Filename = s
 	o.Datetime = parseDatetime(filepath.Base(s))
-	config, content, err = readTrace(s)
+	config, content, err = readTrace(s, usecol)
 	if err != nil {
 		return
 	}
@@ -378,7 +378,7 @@ func db2mw(db float64) float64 {
 
 // readTrace read from a filename to `config` from first line,
 // `content` from no # line.
-func readTrace(filename string) (config configMap, content contentArray, err error) {
+func readTrace(filename string, usecol int) (config configMap, content contentArray, err error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return
