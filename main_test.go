@@ -49,6 +49,14 @@ func Test_contentArraysignalBand(t *testing.T) {
 	}
 }
 
+func Test_parseDatetime(t *testing.T) {
+	actual := parseDatetime("20200718_190716")
+	expected := "2020-07-18 19:07:16"
+	if actual != expected {
+		t.Fatalf("got: %v want: %v", actual, expected)
+	}
+}
+
 func Test_parseField(t *testing.T) {
 	actual0, actual1, err := parseField("50-100")
 	if err != nil {
