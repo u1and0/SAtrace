@@ -63,12 +63,22 @@ func Test_parseField(t *testing.T) {
 		t.Fatalf("error: %v", err)
 	}
 	expected0 := 50
-	expected1 := 100
 	if actual0 != expected0 {
 		t.Fatalf("got: %v want: %v", actual0, expected0)
 	}
+	expected1 := 100
 	if actual1 != expected1 {
 		t.Fatalf("got: %v want: %v", actual1, expected1)
+	}
+	// No "-" contain test
+	_, _, err = parseField("50")
+	if err == nil {
+		t.Fatalf("error must be occur %s", err)
+	}
+	// lower upper test
+	_, _, err = parseField("100-50")
+	if err == nil {
+		t.Fatalf("error must be occur %s", err)
 	}
 }
 
