@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
@@ -118,6 +119,15 @@ func Test_readTrace(t *testing.T) {
 	for i, e := range actualDf.Content {
 		if expectedContent[i] != e {
 			t.Fatalf("got: %v want: %v\ndump all: %v", actualDf.Content[i], e, actualDf.Content)
+		}
+	}
+
+	// Index test
+	expectedIndex := []float64{4.5, 4.6, 4.7, 4.8, 4.9, 5, 5.1, 5.2, 5.3, 5.4, 5.5}
+	for i, a := range actualDf.Index {
+		a = math.Round(a*10) / 10 // 123.49999 => 123.4
+		if expectedIndex[i] != a {
+			t.Fatalf("got: %v want: %v\ndump all: %v", actualDf.Index[i], a, actualDf.Index)
 		}
 	}
 }

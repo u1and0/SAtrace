@@ -40,6 +40,7 @@ import (
 	"sync"
 
 	"github.com/mitchellh/cli"
+	"github.com/mpiannucci/peakdetect"
 )
 
 var (
@@ -47,10 +48,12 @@ var (
 	field arrayField
 	// usecol is column of using calculation
 	usecol int
-	// logger print to stdout
+	// format is display format like %f, %e, %E
 	format string
-	// logger print to stdout
+	// delim is character of delimiter
 	delim string
+	// delta use peak search value lower by delta
+	delta float64
 	// debug mode
 	debug bool
 	// wg wait goroutine
@@ -92,6 +95,9 @@ func main() {
 		},
 		"elen": func() (cli.Command, error) {
 			return &ElenCommand{}, nil
+		},
+		"peak": func() (cli.Command, error) {
+			return &PeakCommand{}, nil
 		},
 	}
 
@@ -280,6 +286,96 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 	return
 }
 
+/* Peak search subcommand */
+
+// PeakCommand command definition
+type PeakCommand struct{}
+
+// Synopsis message of `satrace peak`
+func (e *PeakCommand) Synopsis() string {
+	return "satrace subcommand peak"
+}
+
+// Help message of `satrace peak`
+func (e *PeakCommand) Help() string {
+	return "usage: satrace peak -f 50-100"
+}
+
+// Run print result of writeOutRow()
+func (e *PeakCommand) Run(args []string) int {
+	flags := flag.NewFlagSet("peak", flag.ContinueOnError)
+	flags.Var(&field, "f", "Field range such as -f 50-100")
+	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
+	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
+	flags.Float64Var(&delta, "d", 1, "Peak search delta")
+	flags.BoolVar(&debug, "debug", false, "Debug mode")
+	if err := flags.Parse(args); err != nil {
+		return 1
+	}
+	for _, filename := range flags.Args() {
+		// File not exist then next loop so that filtering here
+		// flags.Args() contains all flag and filename args
+		if _, err := os.Stat(filename); err != nil {
+			continue
+		}
+		wg.Add(1)
+		go func(f string) {
+			defer wg.Done()
+			var err error
+			o, err := e.writeOutRow(f)
+			if err != nil {
+				panic(err)
+			}
+			logger.Println(o)
+		}(filename)
+	}
+	wg.Wait()
+	return 0
+}
+
+// writeOutRow return a line of processed content
+func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
+	var (
+		df   Trace
+		m, n int
+	)
+	o.Filename = s
+	o.Format = format
+	o.Datetime = parseDatetime(filepath.Base(s))
+	df, err = readTrace(s, usecol)
+	if err != nil {
+		return
+	}
+	o.Center = df.Config[":FREQ:CENT"]
+	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
+		for _, f := range field {
+			m, n, err = parseField(f)
+			if err != nil {
+				return
+			}
+			i, _ := df.peakSearch(m, n, delta)
+			o.Fields = i
+		}
+	} else { // no -f flag
+		var end int
+		end, err = strconv.Atoi(df.Config[":SWE:POIN"])
+		if err != nil {
+			return
+		}
+		o.Fields, _ = df.peakSearch(0, end-1, delta)
+	}
+	// Debug print format
+	if debug {
+		logger.Printf("[ CONFIG ]:%v\n", df.Config)
+		logger.Printf("[ CONTENT ]:%v\n", df.Content)
+		logger.Printf("[ FIELD ]:%v\n", field)
+		logger.Printf("[ TYPE OUTROW ]%v\n", o)
+		logger.Printf("[ VALUE OF PEAK ]%v\n", o.Fields)
+		// continue // print not standard output
+	}
+	return
+}
+
 // OutRow.String print as comma separated value
 func (o OutRow) String() string {
 	s := fmt.Sprintf("%s,%s,%s", // comma separated
@@ -295,6 +391,45 @@ func (o OutRow) String() string {
 		}(), ","), // comma separated
 	)
 	return s
+}
+
+// peakSearch search values of local maxima (peaks)
+func (c Trace) peakSearch(m, n int, p float64) ([]float64, []float64) {
+	_, _, maxi, maxv := peakdetect.PeakDetect(c.Content[m:n+1], p)
+	// Offset by range start value "m"
+	maxi = func() []int {
+		for i := range maxi {
+			maxi[i] += m
+		}
+		return maxi
+	}()
+	// Offset by config center & points
+	maxf := c.Index[m : n+1]
+	return maxf, maxv
+}
+
+func parseIndex(c configMap) []float64 {
+	center := asFloat64(c[":FREQ:CENT"])
+	span := asFloat64(c[":FREQ:SPAN"])
+	points := asFloat64(c[":SWE:POIN"])
+	starts := center - span/2
+	finish := center + span/2
+	div := (finish - starts) / (points - 1)
+	index := make([]float64, int(points))
+	var i int
+	for d := starts; d <= finish; d += div {
+		index[i] = d
+		i++
+	}
+	return index
+}
+
+func asFloat64(s string) float64 {
+	f, err := strconv.ParseFloat(strings.Fields(s)[0], 64)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
 
 // signalBand convert mWatt then sum between band
@@ -360,10 +495,14 @@ func db2mw(db float64) float64 {
 
 // Trace is a set of config & data column read from a txt file
 type Trace struct {
-	// configMap is a first line of data
+	// Config is a first line of data
 	Config map[string]string
-	// contentArray read from data
+	// Content read from data
 	Content []float64
+	// Index is parse from config center and config point
+	Index []float64
+	// Unit is a index unit kHz, MHz, GHz... read from config
+	Unit string
 }
 
 // readTrace read from a filename to `config` from first line,
@@ -384,7 +523,10 @@ func readTrace(filename string, usecol int) (df Trace, err error) {
 	for {
 		line, _, err = reader.ReadLine()
 		if isConf { // First line is configure
-			df.Config = parseConfig(line)
+			config := parseConfig(line)
+			df.Config = config
+			df.Index = parseIndex(config)
+			df.Unit = strings.Fields(config[":FREQ:CENT"])[1]
 			isConf = false
 			continue
 		}
