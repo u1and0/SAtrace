@@ -41,7 +41,6 @@ import (
 
 	"github.com/mitchellh/cli"
 	"github.com/montanaflynn/stats"
-	"github.com/mpiannucci/peakdetect"
 )
 
 var (
@@ -305,7 +304,7 @@ func (e *PeakCommand) Help() string {
 // Run print result of writeOutRow()
 func (e *PeakCommand) Run(args []string) int {
 	flags := flag.NewFlagSet("peak", flag.ContinueOnError)
-	flags.Var(&field, "f", "Field range such as -f 50-100")
+	// flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
 	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
 	flags.Float64Var(&delta, "d", 1, "Peak search delta")
@@ -337,9 +336,8 @@ func (e *PeakCommand) Run(args []string) int {
 // writeOutRow return a line of processed content
 func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 	var (
-		df   Trace
-		m, n int
-		v    []float64
+		df Trace
+		v  []float64
 	)
 	o.Filename = s
 	o.Format = format
@@ -349,22 +347,7 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 		return
 	}
 	o.Center = df.Config[":FREQ:CENT"]
-	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
-		for _, f := range field {
-			m, n, err = parseField(f)
-			if err != nil {
-				return
-			}
-			o.Fields, v = df.peakSearch(m, n, delta)
-		}
-	} else { // no -f flag
-		var end int
-		end, err = strconv.Atoi(df.Config[":SWE:POIN"])
-		if err != nil {
-			return
-		}
-		o.Fields, v = df.peakSearch(0, end-1, delta)
-	}
+	o.Fields, v = df.peakSearch(delta)
 	// Debug print format
 	if debug {
 		logger.Printf("[ CONFIG ]:%v\n", df.Config)
@@ -396,28 +379,25 @@ func (o OutRow) String() string {
 }
 
 // peakSearch search values of local maxima (peaks)
-func (c Trace) peakSearch(m, n int, p float64) ([]float64, []float64) {
-	// for i, e := range c.Content[m : n+1] {
-	//
-	// }
-	_, _, maxi, maxv := peakdetect.PeakDetect(c.Content[m:n+1], p)
-	// Offset by range start value "m"
-	maxi = func() []int {
-		for i := range maxi {
-			maxi[i] += m
+func (c Trace) peakSearch(delta float64) (pi, pe []float64) {
+	nf := c.noisefloor()
+	for i, e := range c.Content {
+		if e-nf > delta {
+			pi = append(pi, c.Index[i])
+			pe = append(pe, e)
 		}
-		return maxi
-	}()
-	// Offset by config center & points
-	maxf := c.Index[m : n+1]
-	return maxf, maxv
+	}
+	return
 }
 
 // noisefloor define as first quantile
-func (c Trace) noisefloor() (nf float64, err error) {
+func (c Trace) noisefloor() float64 {
 	const QUANTILE = 25
-	nf, err = stats.Percentile(c.Content, QUANTILE)
-	return
+	nf, err := stats.Percentile(c.Content, QUANTILE)
+	if err != nil {
+		logger.Printf("error %s", err)
+	}
+	return nf
 }
 
 func parseIndex(c configMap) []float64 {

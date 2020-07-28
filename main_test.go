@@ -85,7 +85,7 @@ func Test_parseField(t *testing.T) {
 
 func Test_Tracenoisefloor(t *testing.T) {
 	c := Trace{Content: []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}}
-	actual, _ := c.noisefloor()
+	actual := c.noisefloor()
 	expected := 2.5
 	if actual != expected {
 		t.Fatalf("got: %v want: %v", actual, expected)
