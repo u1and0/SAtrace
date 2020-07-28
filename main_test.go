@@ -85,7 +85,7 @@ func Test_parseField(t *testing.T) {
 
 // Include parse parseConfig(b []byte) test
 func Test_readTrace(t *testing.T) {
-	filename := "data/20200627_180505.txt"
+	filename := "test/20200627_180505.txt"
 	usecol := 1
 	actualDf, err := readTrace(filename, usecol)
 	if err != nil {
@@ -142,7 +142,7 @@ func bench(b *testing.B, a []string) {
 
 func Benchmark(b *testing.B) {
 	files := []string{
-		"data/20200627_180505.txt",
+		"test/20200627_180505.txt",
 	}
 	bench(b, files)
 }
