@@ -83,6 +83,15 @@ func Test_parseField(t *testing.T) {
 	}
 }
 
+func Test_Tracenoisefloor(t *testing.T) {
+	c := Trace{Content: []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}}
+	actual, _ := c.noisefloor()
+	expected := 2.5
+	if actual != expected {
+		t.Fatalf("got: %v want: %v", actual, expected)
+	}
+}
+
 // Include parse parseConfig(b []byte) test
 func Test_readTrace(t *testing.T) {
 	filename := "test/20200627_180505.txt"

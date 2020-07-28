@@ -40,6 +40,7 @@ import (
 	"sync"
 
 	"github.com/mitchellh/cli"
+	"github.com/montanaflynn/stats"
 	"github.com/mpiannucci/peakdetect"
 )
 
@@ -338,6 +339,7 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 	var (
 		df   Trace
 		m, n int
+		v    []float64
 	)
 	o.Filename = s
 	o.Format = format
@@ -353,8 +355,7 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 			if err != nil {
 				return
 			}
-			i, _ := df.peakSearch(m, n, delta)
-			o.Fields = i
+			o.Fields, v = df.peakSearch(m, n, delta)
 		}
 	} else { // no -f flag
 		var end int
@@ -362,7 +363,7 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 		if err != nil {
 			return
 		}
-		o.Fields, _ = df.peakSearch(0, end-1, delta)
+		o.Fields, v = df.peakSearch(0, end-1, delta)
 	}
 	// Debug print format
 	if debug {
@@ -370,7 +371,8 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 		logger.Printf("[ CONTENT ]:%v\n", df.Content)
 		logger.Printf("[ FIELD ]:%v\n", field)
 		logger.Printf("[ TYPE OUTROW ]%v\n", o)
-		logger.Printf("[ VALUE OF PEAK ]%v\n", o.Fields)
+		logger.Printf("[ INDEX OF PEAK ]%v\n", o.Fields)
+		logger.Printf("[ VALUE OF PEAK ]%v\n", v)
 		// continue // print not standard output
 	}
 	return
@@ -395,6 +397,9 @@ func (o OutRow) String() string {
 
 // peakSearch search values of local maxima (peaks)
 func (c Trace) peakSearch(m, n int, p float64) ([]float64, []float64) {
+	// for i, e := range c.Content[m : n+1] {
+	//
+	// }
 	_, _, maxi, maxv := peakdetect.PeakDetect(c.Content[m:n+1], p)
 	// Offset by range start value "m"
 	maxi = func() []int {
@@ -406,6 +411,13 @@ func (c Trace) peakSearch(m, n int, p float64) ([]float64, []float64) {
 	// Offset by config center & points
 	maxf := c.Index[m : n+1]
 	return maxf, maxv
+}
+
+// noisefloor define as first quantile
+func (c Trace) noisefloor() (nf float64, err error) {
+	const QUANTILE = 25
+	nf, err = stats.Percentile(c.Content, QUANTILE)
+	return
 }
 
 func parseIndex(c configMap) []float64 {
