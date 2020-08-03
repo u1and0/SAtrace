@@ -116,12 +116,12 @@ type TableCommand struct{}
 
 // Synopsis message of `satrace table`
 func (e *TableCommand) Synopsis() string {
-	return "satrace subcommand table"
+	return "satrace subcommand table return dB of txt field"
 }
 
 // Help message of `satrace table`
 func (e *TableCommand) Help() string {
-	return "usage: satrace table data/*.txt"
+	return "usage: satrace table -f 100-200 -c 2 data/*.txt"
 }
 
 // Run print result of writeOutRow()
@@ -204,12 +204,12 @@ type ElenCommand struct{}
 
 // Synopsis message of `satrace elen`
 func (e *ElenCommand) Synopsis() string {
-	return "satrace subcommand elen"
+	return "satrace subcommand elen returns millWatt of field sum"
 }
 
 // Help message of `satrace elen`
 func (e *ElenCommand) Help() string {
-	return "usage: satrace elen -f 50-100"
+	return "usage: satrace elen -f 50-100 --format %e trace/*.txt"
 }
 
 // Run print result of writeOutRow()
@@ -296,12 +296,12 @@ type PeakCommand struct{}
 
 // Synopsis message of `satrace peak`
 func (e *PeakCommand) Synopsis() string {
-	return "satrace subcommand peak"
+	return "satrace subcommand peak returns frequency of peak which value is laeger than delta"
 }
 
 // Help message of `satrace peak`
 func (e *PeakCommand) Help() string {
-	return "usage: satrace peak -f 50-100"
+	return "usage: satrace peak -f 50-100 -d 10 -c 1 --format %.3f trace/*.txt"
 }
 
 // Run print result of writeOutRow()
