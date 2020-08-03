@@ -40,12 +40,12 @@ func Test_contentArraysignalBand(t *testing.T) {
 	f := Trace{Content: []float64{0, 3, 6, 10}} // lambda x: 10^(x/10) => {1, 2, 4, 10}
 	var actual string
 	actual = fmt.Sprintf("%.1f", f.signalBand(0, 2))
-	expected := "8.4" // =10 * log10(1+2+4)
+	expected := "7.0" // =1+2+4
 	if actual != expected {
 		t.Fatalf("got: %v want: %v", actual, expected)
 	}
 	actual = fmt.Sprintf("%.1f", f.signalBand(1, 3))
-	expected = "12.0" // =10 * log10(2+4+10)
+	expected = "16.0" // =2+4+10
 	if actual != expected {
 		t.Fatalf("got: %v want: %v", actual, expected)
 	}
