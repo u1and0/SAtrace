@@ -70,11 +70,12 @@ type (
 
 	// OutRow is a output line
 	OutRow struct {
-		Filename string
-		Datetime string
-		Center   string
-		Fields   []float64
-		Format   string
+		Filename   string
+		Datetime   string
+		Center     string
+		Fields     []float64
+		Format     string
+		NoiseFloor float64
 	}
 	// Command is a list of subcommand
 	Command interface {
@@ -173,6 +174,7 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 		logger.Printf("[ FIELD ]:%v\n", field)
 	}
 	o.Center = df.Config[":FREQ:CENT"]
+	o.NoiseFloor = df.noisefloor()
 	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
 		for _, f := range field {
 			m, n, err = parseField(f) // => [[50 100] [300 350]...]
@@ -260,6 +262,7 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 		logger.Printf("[ FIELD ]:%v\n", field)
 	}
 	o.Center = df.Config[":FREQ:CENT"]
+	o.NoiseFloor = df.noisefloor()
 	if len(field) > 0 { // => arrayField{} : [["50-100"] ["300-350"]...]
 		for _, f := range field {
 			m, n, err = parseField(f)
@@ -347,6 +350,7 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 		return
 	}
 	o.Center = df.Config[":FREQ:CENT"]
+	o.NoiseFloor = df.noisefloor()
 	o.Fields, v = df.peakSearch(delta)
 	// Debug print format
 	if debug {
@@ -363,9 +367,10 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 
 // OutRow.String print as comma separated value
 func (o OutRow) String() string {
-	s := fmt.Sprintf("%s,%s,%s", // comma separated
+	s := fmt.Sprintf("%s,%s,%s,%s", // comma separated
 		o.Datetime,
 		o.Center,
+		fmt.Sprintf(o.Format, o.NoiseFloor),
 		strings.Join(func() (ss []string) {
 			for _, f := range o.Fields { // convert []float64=>[]string
 				// s := strconv.FormatFloat(f, 'f', -1, 64)
