@@ -266,8 +266,8 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 			if err != nil {
 				return
 			}
-			mw := df.signalBand(m, n)
-			o.Fields = append(o.Fields, mw)
+			db := df.signalBand(m, n)
+			o.Fields = append(o.Fields, db)
 		}
 	} else { // no -f flag
 		var end int
@@ -424,11 +424,12 @@ func asFloat64(s string) float64 {
 	return f
 }
 
-// signalBand convert mWatt then sum between band
-func (c Trace) signalBand(m, n int) (mw float64) {
+// signalBand convert mill Watt => sum between band => convert decibel
+func (c Trace) signalBand(m, n int) (sig float64) {
 	for i := m; i <= n; i++ {
-		mw += db2mw(c.Content[i])
+		sig += db2mw(c.Content[i])
 	}
+	sig = mw2db(sig)
 	return
 }
 
@@ -483,6 +484,11 @@ func (i *arrayField) Set(value string) error {
 // db2mw returns dB convert to mWatt
 func db2mw(db float64) float64 {
 	return math.Pow(10, db/10)
+}
+
+// mw2db returns dB convert to mWatt
+func mw2db(mw float64) float64 {
+	return 10 * math.Log10(mw)
 }
 
 // Trace is a set of config & data column read from a txt file
