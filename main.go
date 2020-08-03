@@ -408,15 +408,14 @@ func (c Trace) noisefloor() float64 {
 func parseIndex(c configMap) []float64 {
 	center := asFloat64(c[":FREQ:CENT"])
 	span := asFloat64(c[":FREQ:SPAN"])
-	points := asFloat64(c[":SWE:POIN"])
+	points := int(asFloat64(c[":SWE:POIN"]))
 	starts := center - span/2
 	finish := center + span/2
-	div := (finish - starts) / (points - 1)
-	index := make([]float64, int(points))
-	var i int
-	for d := starts; d <= finish+div; d += div {
-		index[i] = d
-		i++
+	div := (finish - starts) / float64(points-1)
+	index := make([]float64, points)
+	for i := 0; i < points; i++ {
+		index[i] = starts
+		starts += div
 	}
 	return index
 }
