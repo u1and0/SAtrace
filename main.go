@@ -414,7 +414,7 @@ func parseIndex(c configMap) []float64 {
 	div := (finish - starts) / (points - 1)
 	index := make([]float64, int(points))
 	var i int
-	for d := starts; d <= finish; d += div {
+	for d := starts; d <= finish+div; d += div {
 		index[i] = d
 		i++
 	}
