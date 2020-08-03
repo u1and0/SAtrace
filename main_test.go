@@ -14,9 +14,10 @@ func Test_OutRowString(t *testing.T) {
 		Fields:     []float64{0, 1, 2, 3},
 		Format:     "%f",
 		NoiseFloor: 1,
+		Show:       "date,noise,center",
 	}
 	actual := fmt.Sprintf("%s", o)
-	expected := "2016-8-29 17:21:34,Center MHz,1.000000,0.000000,1.000000,2.000000,3.000000"
+	expected := "2016-8-29 17:21:34,1.000000,Center MHz,0.000000,1.000000,2.000000,3.000000"
 	if actual != expected {
 		t.Fatalf("got: %v want: %v", actual, expected)
 	}

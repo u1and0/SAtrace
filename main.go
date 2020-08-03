@@ -52,6 +52,8 @@ var (
 	format string
 	// delim is character of delimiter
 	delim string
+	// show is string of format of columns
+	show string
 	// delta use peak search value lower by delta
 	delta float64
 	// debug mode
@@ -76,6 +78,7 @@ type (
 		Fields     []float64
 		Format     string
 		NoiseFloor float64
+		Show       string
 	}
 	// Command is a list of subcommand
 	Command interface {
@@ -130,6 +133,7 @@ func (e *TableCommand) Run(args []string) int {
 	flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
 	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
+	flags.StringVar(&show, "show", "date,center,noise", "Print columns separated comma")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -164,6 +168,7 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 	o.Filename = s
 	o.Format = format
 	o.Datetime = parseDatetime(filepath.Base(s))
+	o.Show = show
 	df, err = readTrace(s, usecol)
 	if err != nil {
 		return
@@ -218,6 +223,7 @@ func (e *ElenCommand) Run(args []string) int {
 	flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
 	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
+	flags.StringVar(&show, "show", "date,center,noise", "Print columns separated comma")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -252,6 +258,7 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 	o.Filename = s
 	o.Format = format
 	o.Datetime = parseDatetime(filepath.Base(s))
+	o.Show = show
 	df, err = readTrace(s, usecol)
 	if err != nil {
 		return
@@ -309,8 +316,9 @@ func (e *PeakCommand) Run(args []string) int {
 	flags := flag.NewFlagSet("peak", flag.ContinueOnError)
 	// flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
-	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
+	flags.StringVar(&format, "format", "%f", `Print format (%f, %.3f, %e, %E...)`)
 	flags.Float64Var(&delta, "d", 1, "Peak search delta")
+	flags.StringVar(&show, "show", "date,center,noise", "Print columns separated comma")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -345,6 +353,7 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 	o.Filename = s
 	o.Format = format
 	o.Datetime = parseDatetime(filepath.Base(s))
+	o.Show = show
 	df, err = readTrace(s, usecol)
 	if err != nil {
 		return
@@ -365,22 +374,35 @@ func (e *PeakCommand) writeOutRow(s string) (o OutRow, err error) {
 	return
 }
 
+// stringField join comma separated filed values
+func (o OutRow) stringField() string {
+	var ss []string
+	for _, f := range o.Fields { // convert []float64=>[]string
+		s := fmt.Sprintf(o.Format, f)
+		ss = append(ss, s)
+	}
+	return strings.Join(ss, ",") // comma separated
+}
+
+// stringField join comma separated filed values
+func (o OutRow) stringShows() string {
+	var ss []string
+	for _, s := range strings.Split(o.Show, ",") {
+		switch s {
+		case "date":
+			ss = append(ss, o.Datetime)
+		case "center":
+			ss = append(ss, o.Center)
+		case "noise":
+			ss = append(ss, fmt.Sprintf(o.Format, o.NoiseFloor))
+		}
+	}
+	return strings.Join(ss, ",") // comma separated
+}
+
 // OutRow.String print as comma separated value
 func (o OutRow) String() string {
-	s := fmt.Sprintf("%s,%s,%s,%s", // comma separated
-		o.Datetime,
-		o.Center,
-		fmt.Sprintf(o.Format, o.NoiseFloor),
-		strings.Join(func() (ss []string) {
-			for _, f := range o.Fields { // convert []float64=>[]string
-				// s := strconv.FormatFloat(f, 'f', -1, 64)
-				s := fmt.Sprintf(o.Format, f)
-				ss = append(ss, s)
-			}
-			return
-		}(), ","), // comma separated
-	)
-	return s
+	return fmt.Sprintf("%s,%s", o.stringShows(), o.stringField())
 }
 
 // peakSearch search values of local maxima (peaks)
