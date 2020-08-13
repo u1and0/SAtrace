@@ -147,6 +147,8 @@ func (e *TableCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
+	// Add header
+	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
 	for _, filename := range flags.Args() {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
@@ -237,6 +239,8 @@ func (e *ElenCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
+	// Add header
+	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
 	for _, filename := range flags.Args() {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
@@ -332,6 +336,8 @@ func (e *PeakCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
+	// Add header
+	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
 	for _, filename := range flags.Args() {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
