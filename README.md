@@ -1,51 +1,74 @@
 satrace - SAtrace project's CLI tool
 
-# Usage:
+Convert formatted text to Data rows as CSV asynchronously.
 
-```sh
-# No option
-# Dump txt to SAtrace format data
-$ satrace *.txt
+# Usage
+
+```
+$ satrace SUBCOMMAND [OPTIONS] PATH ...
+```
+
+## Subcommand
+* table - Extract data column to row. Returns dB of text field.
+* elen  - Electric Energy converter. Returns millWatt of field sum.
+* peak  - Peak search method. Returns frequency of peak which value is larger than delta.
+
+
+### Dump table
+Dump txt to SAtrace format data, use `table` subcommand
+
+```
+$ satrace table *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
+```
 
-# Electric Energy converter
-# X axis as line number
+### Electric Energy converter, use `elen` subcommand
+Sum specified line of antilogarithm data content.
+
+<img src="https://latex.codecogs.com/gif.latex?f(x)=\sum_{i=m}^n10^\frac{x_i}{10}"/>
+
+`elen` is abbreviation of "ELectric ENergy"
+
+```
 $ satrace elen -f 425-575 *.txt
-
-# Electric Energy converter
-# X axis as point read from first line configure
-$ satrace elen -F 42-46 *.txt
-
-# Peak search
-$ satrace peak *.txt
 ```
 
 
-## Subcommands
-* elen - Electric Energy converter
-* peak - Peak search method
-
-
-## Common options
--d: Delimer (Default tab)
+### Peak search, use `peak` subcommand
+Extract frequency of peak which value is larger than delta by Noise Floor.
+Noise Floor is defined first quantile.
 
 ```
-$ satrace -d , *.txt > traces.csv
+$ satrace peak -d 10 *.txt
+```
+
+## Options
+### Common options
+* -c: Column of using calculation
+* --format: Print format %f, %e, %E, ...
+* --show: Print columns separated comma
+* --debug: Debug mode
+
+### `table` subcommand options
+* -f: Filed range as point (multiple OK)
+
+```
+$ satrace table -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 ```
 
 
-## Electric Energy converter options
--f: Filed range as point (multiple OK)
--F: Filed range as  (multiple OK)
+
+### `elen` subcommand options
+* -f: Filed range as point (multiple OK)
 
 ```
 $ satrace elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 ```
 
 
-## Peak search options
-None
+### `peak` subcommand options
+* -d: Use peak search value lower by delta
 
 
 # Data Structure
@@ -62,10 +85,13 @@ None
 ```
 
 0  line   : configure strings
+
 1~ line   : data
+
 Last line : End of file
 
 0  column : points
+
 1~ column : data
 
 

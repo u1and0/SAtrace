@@ -2,19 +2,22 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
 func Test_OutRowString(t *testing.T) {
 	o := OutRow{
-		Filename: "filename.txt",
-		Center:   "Center MHz",
-		Datetime: "2016-8-29 17:21:34",
-		Fields:   []float64{0, 1, 2, 3},
-		Format:   "%f",
+		Filename:   "filename.txt",
+		Center:     "Center MHz",
+		Datetime:   "2016-8-29 17:21:34",
+		Fields:     []float64{0, 1, 2, 3},
+		Format:     "%f",
+		NoiseFloor: 1,
+		Show:       "date,noise,center",
 	}
 	actual := fmt.Sprintf("%s", o)
-	expected := "2016-8-29 17:21:34,Center MHz,0.000000,1.000000,2.000000,3.000000"
+	expected := "2016-8-29 17:21:34,1.000000,Center MHz,0.000000,1.000000,2.000000,3.000000"
 	if actual != expected {
 		t.Fatalf("got: %v want: %v", actual, expected)
 	}
@@ -35,7 +38,7 @@ func Test_db2mw(t *testing.T) {
 }
 
 func Test_contentArraysignalBand(t *testing.T) {
-	f := Trace{Content: []float64{0, 3, 6, 10}}
+	f := Trace{Content: []float64{0, 3, 6, 10}} // lambda x: 10^(x/10) => {1, 2, 4, 10}
 	var actual string
 	actual = fmt.Sprintf("%.1f", f.signalBand(0, 2))
 	expected := "7.0" // =1+2+4
@@ -82,9 +85,18 @@ func Test_parseField(t *testing.T) {
 	}
 }
 
+func Test_Tracenoisefloor(t *testing.T) {
+	c := Trace{Content: []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}}
+	actual := c.noisefloor()
+	expected := 2.5
+	if actual != expected {
+		t.Fatalf("got: %v want: %v", actual, expected)
+	}
+}
+
 // Include parse parseConfig(b []byte) test
 func Test_readTrace(t *testing.T) {
-	filename := "data/20200627_180505.txt"
+	filename := "test/20200627_180505.txt"
 	usecol := 1
 	actualDf, err := readTrace(filename, usecol)
 	if err != nil {
@@ -120,6 +132,15 @@ func Test_readTrace(t *testing.T) {
 			t.Fatalf("got: %v want: %v\ndump all: %v", actualDf.Content[i], e, actualDf.Content)
 		}
 	}
+
+	// Index test
+	expectedIndex := []float64{4.5, 4.6, 4.7, 4.8, 4.9, 5, 5.1, 5.2, 5.3, 5.4, 5.5}
+	for i, a := range actualDf.Index {
+		a = math.Round(a*10) / 10 // 123.49999 => 123.4
+		if expectedIndex[i] != a {
+			t.Fatalf("got: %v want: %v\ndump all: %v", actualDf.Index[i], a, actualDf.Index)
+		}
+	}
 }
 
 /*
@@ -132,7 +153,7 @@ func bench(b *testing.B, a []string) {
 
 func Benchmark(b *testing.B) {
 	files := []string{
-		"data/20200627_180505.txt",
+		"test/20200627_180505.txt",
 	}
 	bench(b, files)
 }
