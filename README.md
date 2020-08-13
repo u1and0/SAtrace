@@ -15,10 +15,10 @@ $ satrace SUBCOMMAND [OPTIONS] PATH ...
 
 
 ### Dump table
-Dump txt to SAtrace format data, use `table` subcommand
+Dump txt to SAtrace format data, use `table` subcommand.
 
 ```
-$ satrace table *.txt
+$ satrace table -f 100-200 *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
 ```
@@ -28,7 +28,7 @@ Sum specified line of antilogarithm data content.
 
 <img src="https://latex.codecogs.com/gif.latex?f(x)=\sum_{i=m}^n10^\frac{x_i}{10}"/>
 
-`elen` is abbreviation of "ELectric ENergy"
+`elen` is abbreviation of "ELectric ENergy".
 
 ```
 $ satrace elen -f 425-575 *.txt

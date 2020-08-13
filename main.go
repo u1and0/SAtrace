@@ -6,17 +6,17 @@ Convert formatted text to Data rows as CSV asynchronously.
 Usage:
 
 1. Dump table
-Dump txt to SAtrace format data, use `table` subcommand
+Dump txt to SAtrace format data, use `table` subcommand.
 
 ```
-$ satrace table *.txt
+$ satrace table -f 100-200 *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
 ```
 
 2. Electric Energy converter, use `elen` subcommand
-X axis as line number
-`elen` is abbration of "ELectric ENergy"
+Sum specified line of antilogarithm data content.
+`elen` is abbreviation of "ELectric ENergy".
 
 ```
 $ satrace elen -f 425-575 *.txt
@@ -24,6 +24,8 @@ $ satrace elen -f 425-575 *.txt
 
 
 3. Peak search, use `peak` subcommand
+Extract frequency of peak which value is larger than delta by Noise Floor.
+Noise Floor is defined first quantile.
 
 ```
 $ satrace peak -d 10 *.txt
