@@ -1,25 +1,32 @@
 /*
 satrace - SAtrace project's CLI tool
-Convert formatted text to Date + Data rows asynchronously
+
+Convert formatted text to Data rows as CSV asynchronously.
 
 Usage:
+
+1. Dump table
+Dump txt to SAtrace format data, use `table` subcommand
+
 ```
-# Dump table
-# Dump txt to SAtrace format data
 $ satrace table *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
+```
 
-# Electric Energy converter
-# X axis as line number
+2. Electric Energy converter, use `elen` subcommand
+X axis as line number
+`elen` is abbration of "ELectric ENergy"
+
+```
 $ satrace elen -f 425-575 *.txt
+```
 
-# Electric Energy converter
-# X axis as point read from first line configure
-$ satrace elen -F 42-46 *.txt
 
-# Peak search
-$ satrace peak *.txt
+3. Peak search, use `peak` subcommand
+
+```
+$ satrace peak -d 10 *.txt
 ```
 */
 package main
@@ -119,7 +126,7 @@ type TableCommand struct{}
 
 // Synopsis message of `satrace table`
 func (e *TableCommand) Synopsis() string {
-	return "satrace subcommand table return dB of txt field"
+	return "Extract data column to row. Returns dB of text field."
 }
 
 // Help message of `satrace table`
@@ -209,7 +216,7 @@ type ElenCommand struct{}
 
 // Synopsis message of `satrace elen`
 func (e *ElenCommand) Synopsis() string {
-	return "satrace subcommand elen returns millWatt of field sum"
+	return "Electric Energy converter. Returns millWatt of field sum."
 }
 
 // Help message of `satrace elen`
@@ -303,7 +310,7 @@ type PeakCommand struct{}
 
 // Synopsis message of `satrace peak`
 func (e *PeakCommand) Synopsis() string {
-	return "satrace subcommand peak returns frequency of peak which value is laeger than delta"
+	return "Peak search method. Returns frequency of peak which value is larger than delta."
 }
 
 // Help message of `satrace peak`
@@ -317,7 +324,7 @@ func (e *PeakCommand) Run(args []string) int {
 	// flags.Var(&field, "f", "Field range such as -f 50-100")
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
 	flags.StringVar(&format, "format", "%f", `Print format (%f, %.3f, %e, %E...)`)
-	flags.Float64Var(&delta, "d", 1, "Peak search delta")
+	flags.Float64Var(&delta, "d", 1, "Use peak search value lower by delta")
 	flags.StringVar(&show, "show", "date,center,noise", "Print columns separated comma")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
