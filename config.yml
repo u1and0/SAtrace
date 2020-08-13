@@ -1,0 +1,17 @@
+# subcommandはどれかひとつ選ぶ
+# #でコメントアウト
+# subcommand: table
+subcommand: elen
+# subcommand: peak
+# オプションは複数必要
+options:
+    field:
+        - 100-200
+        - 300-500
+    c: 2
+    format: %e
+    show: date,center
+    debug: false
+    # d: 10
+input: "trace/20200801_010656.txt"
+output: hoge.csv

@@ -40,6 +40,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -47,6 +48,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/mitchellh/cli"
 	"github.com/montanaflynn/stats"
@@ -96,11 +99,51 @@ type (
 		Table(args []string) int
 		Elen(args []string) int
 	}
+
+	// T is struct of yaml config
+	T struct {
+		Subcommand string `yaml:"subcommand"`
+		Options    string `yaml:"options"`
+		Input      string `yaml:"input"`
+		Output     string `yaml:"output"`
+	}
+	// O is struct of yaml config in options
+	O struct {
+		Field  string `yaml:"options"`
+		C      string `yaml:"subcommand"`
+		Format string `yaml:"subcommand"`
+		Show   string `yaml:"subcommand"`
+		D      string `yaml:"subcommand"`
+		Debug  string `yaml:"subcommand"`
+	}
 )
 
 func main() {
-	c := cli.NewCLI("satrace", "0.1.0") // subcommand struct + version
-	c.Args = os.Args[1:]
+	c := cli.NewCLI("satrace", "0.2.0")
+	if len(os.Args) < 2 { // no argument
+		raw, err := ioutil.ReadFile("./config.yml")
+		if err != nil {
+			logger.Fatalf("%s", err.Error())
+			os.Exit(1)
+		}
+		t := T{}
+		err = yaml.Unmarshal(raw, &t)
+		if err != nil {
+			logger.Fatalf("%s", err.Error())
+			os.Exit(1)
+		}
+		c.Args = []string{
+			t.Subcommand,
+			t.Options.Field,
+			t.Options.C,
+			t.Options.Format,
+			t.Options.Show,
+			t.Options.D,
+			t.Options.Debug,
+		}
+	} else { // has subcommand and options
+		c.Args = os.Args[1:]
+	}
 	// Subcommands register
 	c.Commands = map[string]cli.CommandFactory{
 		"table": func() (cli.Command, error) {
