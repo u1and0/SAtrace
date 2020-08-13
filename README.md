@@ -26,7 +26,7 @@ $ satrace table *.txt
 ### Electric Energy converter, use `elen` subcommand
 Sum specified line of antilogarithm data content.
 
-<img src="https://latex.codecogs.com/gif.latex?f(x)=\sum_{i=m}^n10^\frac{x_n}{10}"/>
+<img src="https://latex.codecogs.com/gif.latex?f(x)=\sum_{i=m}^n10^\frac{x_i}{10}"/>
 
 `elen` is abbreviation of "ELectric ENergy"
 
@@ -45,13 +45,13 @@ $ satrace peak -d 10 *.txt
 
 ## Options
 ### Common options
--c: Column of using calculation
---format: Print format %f, %e, %E, ...
---show: Print columns separated comma
---debug: Debug mode
+* -c: Column of using calculation
+* --format: Print format %f, %e, %E, ...
+* --show: Print columns separated comma
+* --debug: Debug mode
 
 ### `table` subcommand options
--f: Filed range as point (multiple OK)
+* -f: Filed range as point (multiple OK)
 
 ```
 $ satrace table -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
@@ -60,7 +60,7 @@ $ satrace table -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 
 
 ### `elen` subcommand options
--f: Filed range as point (multiple OK)
+* -f: Filed range as point (multiple OK)
 
 ```
 $ satrace elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
@@ -68,7 +68,7 @@ $ satrace elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 
 
 ### `peak` subcommand options
--d: Use peak search value lower by delta
+* -d: Use peak search value lower by delta
 
 
 # Data Structure
