@@ -1,51 +1,65 @@
 satrace - SAtrace project's CLI tool
 
-# Usage:
+Convert formatted text to Data rows as CSV asynchronously.
 
-```sh
-# No option
-# Dump txt to SAtrace format data
-$ satrace *.txt
+# Usage
+
+1. Dump table
+Dump txt to SAtrace format data, use `table` subcommand
+
+```
+$ satrace table *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
-
-# Electric Energy converter
-# X axis as line number
-$ satrace elen -f 425-575 *.txt
-
-# Electric Energy converter
-# X axis as point read from first line configure
-$ satrace elen -F 42-46 *.txt
-
-# Peak search
-$ satrace peak *.txt
 ```
 
+2. Electric Energy converter, use `elen` subcommand
+X axis as line number
+`elen` is abbreviation of "ELectric ENergy"
+
+```
+$ satrace elen -f 425-575 *.txt
+```
+
+
+3. Peak search, use `peak` subcommand
+
+```
+$ satrace peak -d 10 *.txt
+```
 
 ## Subcommands
-* elen - Electric Energy converter
-* peak - Peak search method
+* table - Extract data column to row. Returns dB of text field.
+* elen  - Electric Energy converter. Returns millWatt of field sum.
+* peak  - Peak search method. Returns frequency of peak which value is larger than delta.
 
 
-## Common options
--d: Delimer (Default tab)
+## Options
+### Common options
+-c: Column of using calculation
+--format: Print format %f, %e, %E, ...
+--show: Print columns separated comma
+--debug: Debug mode
 
-```
-$ satrace -d , *.txt > traces.csv
-```
-
-
-## Electric Energy converter options
+### `table` subcommand options
 -f: Filed range as point (multiple OK)
--F: Filed range as  (multiple OK)
+
+```
+$ satrace table -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
+```
+
+
+
+### `elen` subcommand options
+-f: Filed range as point (multiple OK)
 
 ```
 $ satrace elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 ```
 
 
-## Peak search options
-None
+### `peak` subcommand options
+-d: Use peak search value lower by delta
 
 
 # Data Structure
