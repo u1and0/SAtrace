@@ -99,22 +99,18 @@ type (
 		Table(args []string) int
 		Elen(args []string) int
 	}
-
 	// T is struct of yaml config
 	T struct {
 		Subcommand string `yaml:"subcommand"`
-		Options    string `yaml:"options"`
-		Input      string `yaml:"input"`
-		Output     string `yaml:"output"`
-	}
-	// O is struct of yaml config in options
-	O struct {
-		Field  string `yaml:"options"`
-		C      string `yaml:"subcommand"`
-		Format string `yaml:"subcommand"`
-		Show   string `yaml:"subcommand"`
-		D      string `yaml:"subcommand"`
-		Debug  string `yaml:"subcommand"`
+		Options    struct {
+			Field  arrayField `yaml:"field"`
+			C      string     `yaml:"c"`
+			Format string     `yaml:"format"`
+			Show   string     `yaml:"show"`
+			D      string     `yaml:"d"`
+			Debug  string     `yaml:"debug"`
+		}
+		Output string `yaml:"output"`
 	}
 )
 
@@ -132,15 +128,15 @@ func main() {
 			logger.Fatalf("%s", err.Error())
 			os.Exit(1)
 		}
-		c.Args = []string{
+		ss := []string{
 			t.Subcommand,
-			t.Options.Field,
 			t.Options.C,
 			t.Options.Format,
 			t.Options.Show,
 			t.Options.D,
 			t.Options.Debug,
 		}
+		c.Args = append(ss, t.Options.Field...)
 	} else { // has subcommand and options
 		c.Args = os.Args[1:]
 	}

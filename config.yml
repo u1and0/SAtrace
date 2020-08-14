@@ -8,10 +8,9 @@ options:
     field:
         - 100-200
         - 300-500
-    c: 2
-    format: %e
-    show: date,center
+    c: "2"
+    format: "%e"
+    show: "date,center,noisefloor"
     debug: false
     # d: 10
-input: "trace/20200801_010656.txt"
-output: hoge.csv
+output: "hoge.csv"
