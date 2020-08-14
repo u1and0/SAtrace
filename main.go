@@ -116,7 +116,20 @@ type (
 
 func main() {
 	c := cli.NewCLI("satrace", "0.2.0")
-	if len(os.Args) < 2 { // no argument
+	// Subcommands register
+	c.Commands = map[string]cli.CommandFactory{
+		"table": func() (cli.Command, error) {
+			return &TableCommand{}, nil
+		},
+		"elen": func() (cli.Command, error) {
+			return &ElenCommand{}, nil
+		},
+		"peak": func() (cli.Command, error) {
+			return &PeakCommand{}, nil
+		},
+	}
+
+	if hasSubcommand(os.Args[1], c.Commands) { // no subcommand argument
 		raw, err := ioutil.ReadFile("./config.yml")
 		if err != nil {
 			logger.Fatalf("%s", err.Error())
@@ -140,24 +153,21 @@ func main() {
 	} else { // has subcommand and options
 		c.Args = os.Args[1:]
 	}
-	// Subcommands register
-	c.Commands = map[string]cli.CommandFactory{
-		"table": func() (cli.Command, error) {
-			return &TableCommand{}, nil
-		},
-		"elen": func() (cli.Command, error) {
-			return &ElenCommand{}, nil
-		},
-		"peak": func() (cli.Command, error) {
-			return &PeakCommand{}, nil
-		},
-	}
 
 	exitCode, err := c.Run()
 	if err != nil {
 		fmt.Printf("Failed to execute: %s\n", err.Error())
 	}
 	os.Exit(exitCode)
+}
+
+func hasSubcommand(a string, m map[string]cli.CommandFactory) bool {
+	for s := range m {
+		if a == s {
+			return true
+		}
+	}
+	return false
 }
 
 /* Table subcommand */
