@@ -129,28 +129,24 @@ func main() {
 		},
 	}
 
-	if hasSubcommand(os.Args[1], c.Commands) { // no subcommand argument
-		raw, err := ioutil.ReadFile("./config.yml")
+	if ok, path := HasConfigYaml(); ok { // Read option from yml file
+		raw, err := ioutil.ReadFile(path)
 		if err != nil {
 			logger.Fatalf("%s", err.Error())
 			os.Exit(1)
 		}
+		// Parse config.yml as T structure
 		t := T{}
 		err = yaml.Unmarshal(raw, &t)
 		if err != nil {
 			logger.Fatalf("%s", err.Error())
 			os.Exit(1)
 		}
-		ss := []string{
-			t.Subcommand,
-			t.Options.C,
-			t.Options.Format,
-			t.Options.Show,
-			t.Options.D,
-			t.Options.Debug,
-		}
-		c.Args = append(ss, t.Options.Field...)
-	} else { // has subcommand and options
+		subcommand := t.OptionsLine()
+		argsFiles := RemoveString(os.Args[1:], path)
+		c.Args = append(subcommand, argsFiles...)
+		fmt.Printf("%v", c.Args)
+	} else { // Read option from command line
 		c.Args = os.Args[1:]
 	}
 
@@ -161,13 +157,51 @@ func main() {
 	os.Exit(exitCode)
 }
 
-func hasSubcommand(a string, m map[string]cli.CommandFactory) bool {
-	for s := range m {
-		if a == s {
-			return true
+// RemoveString removes "search" word from "ss"
+func RemoveString(ss []string, search string) (rs []string) {
+	for _, s := range ss {
+		if s != search {
+			rs = append(rs, s)
 		}
 	}
-	return false
+	return
+}
+
+// HasConfigYaml checks args has config.yml file
+func HasConfigYaml() (bool, string) {
+	for _, s := range os.Args {
+		if filepath.Base(s) == "config.yml" {
+			return true, s
+		}
+	}
+	return false, ""
+}
+
+// OptionsLine create like command line options `-opt + option`
+func (t T) OptionsLine() (ss []string) {
+	ss = []string{t.Subcommand}
+	if t.Options.C != "" {
+		ss = append(ss, "-c", t.Options.C)
+	}
+	if t.Options.Format != "" {
+		ss = append(ss, "-format", t.Options.Format)
+	}
+	if t.Options.Show != "" {
+		ss = append(ss, "-show", t.Options.Show)
+	}
+	if t.Options.D != "" {
+		ss = append(ss, "-d", t.Options.D)
+	}
+	if t.Options.Debug != "" {
+		ss = append(ss, "-debug", t.Options.Debug)
+	}
+	ss = append(ss, func() (f []string) {
+		for _, s := range t.Options.Field {
+			f = append(f, "-f", s)
+		}
+		return
+	}()...) // append [ -f 100-200 -f 300-500 ]
+	return
 }
 
 /* Table subcommand */
