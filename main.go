@@ -1,32 +1,34 @@
 /*
-satrace - SAtrace project's CLI tool
+satracli - SAtrace project's CLI tool
 
 Convert formatted text to Data rows as CSV asynchronously.
 
 Usage:
 
 1. Dump table
-Dump txt to SAtrace format data, use `table` subcommand
+Dump txt to SAtrace format data, use `table` subcommand.
 
 ```
-$ satrace table *.txt
+$ satracli table -f 100-200 *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
 ```
 
 2. Electric Energy converter, use `elen` subcommand
-X axis as line number
-`elen` is abbration of "ELectric ENergy"
+Sum specified line of antilogarithm data content.
+`elen` is abbreviation of "ELectric ENergy".
 
 ```
-$ satrace elen -f 425-575 *.txt
+$ satracli elen -f 425-575 *.txt
 ```
 
 
 3. Peak search, use `peak` subcommand
+Extract frequency of peak which value is larger than delta by Noise Floor.
+Noise Floor is defined first quantile.
 
 ```
-$ satrace peak -d 10 *.txt
+$ satracli peak -d 10 *.txt
 ```
 */
 package main
@@ -48,6 +50,15 @@ import (
 
 	"github.com/mitchellh/cli"
 	"github.com/montanaflynn/stats"
+)
+
+const (
+	// CONFIGYAML config file name
+	CONFIGYAML = "config.yml"
+	// QUANTILE 25% percentile
+	QUANTILE = 25
+	// CHOMP snip # 20200627_180505 *RST & *CLS
+	CHOMP = 2
 )
 
 var (
@@ -97,7 +108,7 @@ type (
 )
 
 func main() {
-	c := cli.NewCLI("satrace", "0.1.0") // subcommand struct + version
+	c := cli.NewCLI("satracli", "0.2.0") // subcommand struct + version
 	c.Args = os.Args[1:]
 	// Subcommands register
 	c.Commands = map[string]cli.CommandFactory{
@@ -124,14 +135,14 @@ func main() {
 // TableCommand command definition
 type TableCommand struct{}
 
-// Synopsis message of `satrace table`
+// Synopsis message of `satracli table`
 func (e *TableCommand) Synopsis() string {
 	return "Extract data column to row. Returns dB of text field."
 }
 
-// Help message of `satrace table`
+// Help message of `satracli table`
 func (e *TableCommand) Help() string {
-	return "usage: satrace table -f 100-200 -c 2 data/*.txt"
+	return "usage: satracli table -f 100-200 -c 2 data/*.txt"
 }
 
 // Run print result of writeOutRow()
@@ -145,7 +156,15 @@ func (e *TableCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
-	for _, filename := range flags.Args() {
+	// Add header
+	logger.Printf("%s", strings.Join(append([]string{show}, field...), ",")) // Unite show & filed
+
+	paths, err := parseStarPath(flags.Args())
+	if err != nil {
+		logger.Printf("error: %v", err)
+		os.Exit(1)
+	}
+	for _, filename := range paths {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
 		if _, err := os.Stat(filename); err != nil {
@@ -214,14 +233,14 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 // ElenCommand command definition
 type ElenCommand struct{}
 
-// Synopsis message of `satrace elen`
+// Synopsis message of `satracli elen`
 func (e *ElenCommand) Synopsis() string {
 	return "Electric Energy converter. Returns millWatt of field sum."
 }
 
-// Help message of `satrace elen`
+// Help message of `satracli elen`
 func (e *ElenCommand) Help() string {
-	return "usage: satrace elen -f 50-100 --format %e trace/*.txt"
+	return "usage: satracli elen -f 50-100 --format %e trace/*.txt"
 }
 
 // Run print result of writeOutRow()
@@ -235,7 +254,15 @@ func (e *ElenCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
-	for _, filename := range flags.Args() {
+	// Add header
+	logger.Printf("%s", strings.Join(append([]string{show}, field...), ",")) // Unite show & filed
+
+	paths, err := parseStarPath(flags.Args())
+	if err != nil {
+		logger.Printf("error: %v", err)
+		os.Exit(1)
+	}
+	for _, filename := range paths {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
 		if _, err := os.Stat(filename); err != nil {
@@ -308,14 +335,14 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 // PeakCommand command definition
 type PeakCommand struct{}
 
-// Synopsis message of `satrace peak`
+// Synopsis message of `satracli peak`
 func (e *PeakCommand) Synopsis() string {
 	return "Peak search method. Returns frequency of peak which value is larger than delta."
 }
 
-// Help message of `satrace peak`
+// Help message of `satracli peak`
 func (e *PeakCommand) Help() string {
-	return "usage: satrace peak -f 50-100 -d 10 -c 1 --format %.3f trace/*.txt"
+	return "usage: satracli peak -f 50-100 -d 10 -c 1 --format %.3f trace/*.txt"
 }
 
 // Run print result of writeOutRow()
@@ -330,7 +357,15 @@ func (e *PeakCommand) Run(args []string) int {
 	if err := flags.Parse(args); err != nil {
 		return 1
 	}
-	for _, filename := range flags.Args() {
+	// Add header
+	logger.Printf("%s", strings.Join(append([]string{show}, field...), ",")) // Unite show & filed
+
+	paths, err := parseStarPath(flags.Args())
+	if err != nil {
+		logger.Printf("error: %v", err)
+		os.Exit(1)
+	}
+	for _, filename := range paths {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
 		if _, err := os.Stat(filename); err != nil {
@@ -426,7 +461,6 @@ func (c Trace) peakSearch(delta float64) (pi, pe []float64) {
 
 // noisefloor define as first quantile
 func (c Trace) noisefloor() float64 {
-	const QUANTILE = 25
 	nf, err := stats.Percentile(c.Content, QUANTILE)
 	if err != nil {
 		logger.Printf("error %s", err)
@@ -467,8 +501,6 @@ func (c Trace) signalBand(m, n int) (mw float64) {
 
 // parseConfig convert first line of data to config map
 func parseConfig(b []byte) configMap {
-	// CHOMP snip # 20200627_180505 *RST & *CLS
-	const CHOMP = 2
 	config := make(configMap)
 	sarray := bytes.Split(b, []byte(";"))
 	sa := sarray[CHOMP : len(sarray)-1] // chomp last new line
@@ -575,4 +607,18 @@ func readTrace(filename string, usecol int) (df Trace, err error) {
 		}
 		df.Content = append(df.Content, f)
 	}
+}
+
+// parseStarPath parsing "*" containing path forcibly
+// For windows cmd bug, *.txt couldn't parse
+// so, using `filepath.Glob()` makes parsing "*"
+// as same as Linux shell.
+func parseStarPath(ss []string) ([]string, error) {
+	for _, p := range ss {
+		if strings.Contains(p, "*") {
+			paths, err := filepath.Glob(p)
+			return paths, err
+		}
+	}
+	return ss, nil
 }
