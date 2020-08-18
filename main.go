@@ -53,8 +53,6 @@ import (
 )
 
 const (
-	// CONFIGYAML config file name
-	CONFIGYAML = "config.yml"
 	// QUANTILE 25% percentile
 	QUANTILE = 25
 	// CHOMP snip # 20200627_180505 *RST & *CLS
