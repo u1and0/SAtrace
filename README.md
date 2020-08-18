@@ -86,15 +86,11 @@ $ satracli elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 # <eof>
 ```
 
-0  line   : configure strings
-
-1~ line   : data
-
-Last line : End of file
-
-0  column : points
-
-1~ column : data
+* 0  line   : configure strings
+* 1~ line   : data
+* Last line : End of file
+* 0  column : points
+* 1~ column : data
 
 
 # Installation
