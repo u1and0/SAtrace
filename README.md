@@ -1,11 +1,11 @@
-satrace - SAtrace project's CLI tool
+satracli - SAtrace project's CLI tool
 
 Convert formatted text to Data rows as CSV asynchronously.
 
 # Usage
 
 ```
-$ satrace SUBCOMMAND [OPTIONS] PATH ...
+$ satracli SUBCOMMAND [OPTIONS] PATH ...
 ```
 
 ## Subcommand
@@ -17,8 +17,10 @@ $ satrace SUBCOMMAND [OPTIONS] PATH ...
 ### Dump table
 Dump txt to SAtrace format data, use `table` subcommand.
 
+![tablepng](https://raw.githubusercontent.com/u1and0/satracli/u1and0-patch-1/gosatrace.png)
+
 ```
-$ satrace table -f 100-200 *.txt
+$ satracli table -f 100-200 *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
 ```
@@ -31,7 +33,7 @@ Sum specified line of antilogarithm data content.
 `elen` is abbreviation of "ELectric ENergy".
 
 ```
-$ satrace elen -f 425-575 *.txt
+$ satracli elen -f 425-575 *.txt
 ```
 
 
@@ -40,7 +42,7 @@ Extract frequency of peak which value is larger than delta by Noise Floor.
 Noise Floor is defined first quantile.
 
 ```
-$ satrace peak -d 10 *.txt
+$ satracli peak -d 10 *.txt
 ```
 
 ## Options
@@ -54,7 +56,7 @@ $ satrace peak -d 10 *.txt
 * -f: Filed range as point (multiple OK)
 
 ```
-$ satrace table -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
+$ satracli table -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 ```
 
 
@@ -63,7 +65,7 @@ $ satrace table -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 * -f: Filed range as point (multiple OK)
 
 ```
-$ satrace elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
+$ satracli elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 ```
 
 
@@ -84,21 +86,17 @@ $ satrace elen -f 0-75 -f 205-280 -f 425-575 -f 725-800 -f 925-1000 *.txt
 # <eof>
 ```
 
-0  line   : configure strings
-
-1~ line   : data
-
-Last line : End of file
-
-0  column : points
-
-1~ column : data
+* 0  line   : configure strings
+* 1~ line   : data
+* Last line : End of file
+* 0  column : points
+* 1~ column : data
 
 
 # Installation
 
 ```
-$ go get github.com/u1and0/satrace
+$ go get github.com/u1and0/satracli
 ```
 
 

@@ -1,4 +1,4 @@
-module github.com/u1and0/satrace
+module github.com/u1and0/satracli
 
 go 1.14
 
