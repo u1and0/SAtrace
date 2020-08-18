@@ -149,7 +149,13 @@ func (e *TableCommand) Run(args []string) int {
 	}
 	// Add header
 	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
-	for _, filename := range flags.Args() {
+
+	paths, err := parseStarPath(flags.Args())
+	if err != nil {
+		logger.Printf("error: %v", err)
+		os.Exit(1)
+	}
+	for _, filename := range paths {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
 		if _, err := os.Stat(filename); err != nil {
@@ -242,21 +248,11 @@ func (e *ElenCommand) Run(args []string) int {
 	// Add header
 	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
 
-	// For windows cmd bug, *.txt couldn't parse
-	// so, using `filepath.Glob()` makes parsing "*"
-	// as same as Linux shell.
-	paths := flags.Args()
-	for _, p := range paths {
-		if strings.Contains(p, "*") {
-			var err error
-			paths, err = filepath.Glob(p)
-			if err != nil {
-				logger.Printf("error: %v", err)
-				os.Exit(1)
-			}
-		}
+	paths, err := parseStarPath(flags.Args())
+	if err != nil {
+		logger.Printf("error: %v", err)
+		os.Exit(1)
 	}
-	fmt.Println(paths)
 	for _, filename := range paths {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
@@ -354,7 +350,13 @@ func (e *PeakCommand) Run(args []string) int {
 	}
 	// Add header
 	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
-	for _, filename := range flags.Args() {
+
+	paths, err := parseStarPath(flags.Args())
+	if err != nil {
+		logger.Printf("error: %v", err)
+		os.Exit(1)
+	}
+	for _, filename := range paths {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
 		if _, err := os.Stat(filename); err != nil {
@@ -599,4 +601,18 @@ func readTrace(filename string, usecol int) (df Trace, err error) {
 		}
 		df.Content = append(df.Content, f)
 	}
+}
+
+// parseStarPath parsing "*" containing path forcibly
+// For windows cmd bug, *.txt couldn't parse
+// so, using `filepath.Glob()` makes parsing "*"
+// as same as Linux shell.
+func parseStarPath(ss []string) ([]string, error) {
+	for _, p := range ss {
+		if strings.Contains(p, "*") {
+			paths, err := filepath.Glob(p)
+			return paths, err
+		}
+	}
+	return ss, nil
 }
