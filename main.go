@@ -1,5 +1,5 @@
 /*
-satrace - SAtrace project's CLI tool
+satracli - SAtrace project's CLI tool
 
 Convert formatted text to Data rows as CSV asynchronously.
 
@@ -9,7 +9,7 @@ Usage:
 Dump txt to SAtrace format data, use `table` subcommand.
 
 ```
-$ satrace table -f 100-200 *.txt
+$ satracli table -f 100-200 *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...
 2019-8-29 23:34:56  -31   -42.4   -43   ...
 ```
@@ -19,7 +19,7 @@ Sum specified line of antilogarithm data content.
 `elen` is abbreviation of "ELectric ENergy".
 
 ```
-$ satrace elen -f 425-575 *.txt
+$ satracli elen -f 425-575 *.txt
 ```
 
 
@@ -28,7 +28,7 @@ Extract frequency of peak which value is larger than delta by Noise Floor.
 Noise Floor is defined first quantile.
 
 ```
-$ satrace peak -d 10 *.txt
+$ satracli peak -d 10 *.txt
 ```
 */
 package main
@@ -108,7 +108,7 @@ type (
 )
 
 func main() {
-	c := cli.NewCLI("satrace", "0.2.0") // subcommand struct + version
+	c := cli.NewCLI("satracli", "0.2.0") // subcommand struct + version
 	c.Args = os.Args[1:]
 	// Subcommands register
 	c.Commands = map[string]cli.CommandFactory{
@@ -135,14 +135,14 @@ func main() {
 // TableCommand command definition
 type TableCommand struct{}
 
-// Synopsis message of `satrace table`
+// Synopsis message of `satracli table`
 func (e *TableCommand) Synopsis() string {
 	return "Extract data column to row. Returns dB of text field."
 }
 
-// Help message of `satrace table`
+// Help message of `satracli table`
 func (e *TableCommand) Help() string {
-	return "usage: satrace table -f 100-200 -c 2 data/*.txt"
+	return "usage: satracli table -f 100-200 -c 2 data/*.txt"
 }
 
 // Run print result of writeOutRow()
@@ -233,14 +233,14 @@ func (e *TableCommand) writeOutRow(s string) (o OutRow, err error) {
 // ElenCommand command definition
 type ElenCommand struct{}
 
-// Synopsis message of `satrace elen`
+// Synopsis message of `satracli elen`
 func (e *ElenCommand) Synopsis() string {
 	return "Electric Energy converter. Returns millWatt of field sum."
 }
 
-// Help message of `satrace elen`
+// Help message of `satracli elen`
 func (e *ElenCommand) Help() string {
-	return "usage: satrace elen -f 50-100 --format %e trace/*.txt"
+	return "usage: satracli elen -f 50-100 --format %e trace/*.txt"
 }
 
 // Run print result of writeOutRow()
@@ -335,14 +335,14 @@ func (e *ElenCommand) writeOutRow(s string) (o OutRow, err error) {
 // PeakCommand command definition
 type PeakCommand struct{}
 
-// Synopsis message of `satrace peak`
+// Synopsis message of `satracli peak`
 func (e *PeakCommand) Synopsis() string {
 	return "Peak search method. Returns frequency of peak which value is larger than delta."
 }
 
-// Help message of `satrace peak`
+// Help message of `satracli peak`
 func (e *PeakCommand) Help() string {
-	return "usage: satrace peak -f 50-100 -d 10 -c 1 --format %.3f trace/*.txt"
+	return "usage: satracli peak -f 50-100 -d 10 -c 1 --format %.3f trace/*.txt"
 }
 
 // Run print result of writeOutRow()
