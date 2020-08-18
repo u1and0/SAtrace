@@ -17,6 +17,8 @@ $ satrace SUBCOMMAND [OPTIONS] PATH ...
 ### Dump table
 Dump txt to SAtrace format data, use `table` subcommand.
 
+![tablepng](https://raw.githubusercontent.com/u1and0/satrace/u1and0-patch-1/gosatrace.png)
+
 ```
 $ satrace table -f 100-200 *.txt
 2019-8-29 22:23:47  -35   -39.4   -55   ...

@@ -108,7 +108,7 @@ type (
 )
 
 func main() {
-	c := cli.NewCLI("satrace", "0.1.0") // subcommand struct + version
+	c := cli.NewCLI("satrace", "0.2.0") // subcommand struct + version
 	c.Args = os.Args[1:]
 	// Subcommands register
 	c.Commands = map[string]cli.CommandFactory{
