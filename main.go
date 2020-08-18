@@ -241,7 +241,23 @@ func (e *ElenCommand) Run(args []string) int {
 	}
 	// Add header
 	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
-	for _, filename := range flags.Args() {
+
+	// For windows cmd bug, *.txt couldn't parse
+	// so, using `filepath.Glob()` makes parsing "*"
+	// as same as Linux shell.
+	paths := flags.Args()
+	for _, p := range paths {
+		if strings.Contains(p, "*") {
+			var err error
+			paths, err = filepath.Glob(p)
+			if err != nil {
+				logger.Printf("error: %v", err)
+				os.Exit(1)
+			}
+		}
+	}
+	fmt.Println(paths)
+	for _, filename := range paths {
 		// File not exist then next loop so that filtering here
 		// flags.Args() contains all flag and filename args
 		if _, err := os.Stat(filename); err != nil {
