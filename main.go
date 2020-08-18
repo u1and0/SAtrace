@@ -55,6 +55,15 @@ import (
 	"github.com/montanaflynn/stats"
 )
 
+const (
+	// CONFIGYAML config file name
+	CONFIGYAML = "config.yml"
+	// QUANTILE 25% percentile
+	QUANTILE = 25
+	// CHOMP snip # 20200627_180505 *RST & *CLS
+	CHOMP = 2
+)
+
 var (
 	// field code
 	field arrayField
@@ -170,7 +179,7 @@ func RemoveString(ss []string, search string) (rs []string) {
 // HasConfigYaml checks args has config.yml file
 func HasConfigYaml() (bool, string) {
 	for _, s := range os.Args {
-		if filepath.Base(s) == "config.yml" {
+		if filepath.Base(s) == CONFIGYAML {
 			return true, s
 		}
 	}
@@ -517,7 +526,6 @@ func (c Trace) peakSearch(delta float64) (pi, pe []float64) {
 
 // noisefloor define as first quantile
 func (c Trace) noisefloor() float64 {
-	const QUANTILE = 25
 	nf, err := stats.Percentile(c.Content, QUANTILE)
 	if err != nil {
 		logger.Printf("error %s", err)
@@ -558,8 +566,6 @@ func (c Trace) signalBand(m, n int) (mw float64) {
 
 // parseConfig convert first line of data to config map
 func parseConfig(b []byte) configMap {
-	// CHOMP snip # 20200627_180505 *RST & *CLS
-	const CHOMP = 2
 	config := make(configMap)
 	sarray := bytes.Split(b, []byte(";"))
 	sa := sarray[CHOMP : len(sarray)-1] // chomp last new line
