@@ -148,7 +148,7 @@ func (e *TableCommand) Run(args []string) int {
 		return 1
 	}
 	// Add header
-	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
+	logger.Printf("%s", strings.Join(append([]string{show}, field...), ",")) // Unite show & filed
 
 	paths, err := parseStarPath(flags.Args())
 	if err != nil {
@@ -246,7 +246,7 @@ func (e *ElenCommand) Run(args []string) int {
 		return 1
 	}
 	// Add header
-	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
+	logger.Printf("%s", strings.Join(append([]string{show}, field...), ",")) // Unite show & filed
 
 	paths, err := parseStarPath(flags.Args())
 	if err != nil {
@@ -349,7 +349,7 @@ func (e *PeakCommand) Run(args []string) int {
 		return 1
 	}
 	// Add header
-	logger.Printf("%s,%s", show, func() string { return strings.Join(field, ",") }())
+	logger.Printf("%s", strings.Join(append([]string{show}, field...), ",")) // Unite show & filed
 
 	paths, err := parseStarPath(flags.Args())
 	if err != nil {
