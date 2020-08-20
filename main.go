@@ -117,7 +117,7 @@ type (
 			Format string     `yaml:"format"`
 			Show   string     `yaml:"show"`
 			D      string     `yaml:"d"`
-			Debug  string     `yaml:"debug"`
+			Debug  bool       `yaml:"debug"`
 		}
 		Output string `yaml:"output"`
 	}
@@ -154,10 +154,10 @@ func main() {
 		subcommand := t.OptionsLine()
 		argsFiles := RemoveString(os.Args[1:], path)
 		c.Args = append(subcommand, argsFiles...)
-		fmt.Printf("%v", c.Args)
 	} else { // Read option from command line
 		c.Args = os.Args[1:]
 	}
+	fmt.Printf("%v", c.Args)
 
 	exitCode, err := c.Run()
 	if err != nil {
@@ -201,8 +201,8 @@ func (t T) OptionsLine() (ss []string) {
 	if t.Options.D != "" {
 		ss = append(ss, "-d", t.Options.D)
 	}
-	if t.Options.Debug != "" {
-		ss = append(ss, "-debug", t.Options.Debug)
+	if t.Options.Debug {
+		ss = append(ss, "-debug")
 	}
 	ss = append(ss, func() (f []string) {
 		for _, s := range t.Options.Field {

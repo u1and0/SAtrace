@@ -10,7 +10,7 @@ options:
         - 300-500
     c: "2"
     format: "%e"
-    show: "date,center,noisefloor"
+    show: "date,center"
     debug: false
     # d: 10
 output: "hoge.csv"
