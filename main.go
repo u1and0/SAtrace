@@ -40,6 +40,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -48,11 +49,15 @@ import (
 	"strings"
 	"sync"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/mitchellh/cli"
 	"github.com/montanaflynn/stats"
 )
 
 const (
+	// CONFIGYAML config file name
+	CONFIGYAML = "config.yml"
 	// QUANTILE 25% percentile
 	QUANTILE = 25
 	// CHOMP snip # 20200627_180505 *RST & *CLS
@@ -103,11 +108,23 @@ type (
 		Table(args []string) int
 		Elen(args []string) int
 	}
+	// T is struct of yaml config
+	T struct {
+		Subcommand string `yaml:"subcommand"`
+		Options    struct {
+			Field  arrayField `yaml:"field"`
+			C      string     `yaml:"c"`
+			Format string     `yaml:"format"`
+			Show   string     `yaml:"show"`
+			D      string     `yaml:"d"`
+			Debug  string     `yaml:"debug"`
+		}
+		Output string `yaml:"output"`
+	}
 )
 
 func main() {
-	c := cli.NewCLI("satracli", "0.2.0") // subcommand struct + version
-	c.Args = os.Args[1:]
+	c := cli.NewCLI("satrace", "0.2.0r")
 	// Subcommands register
 	c.Commands = map[string]cli.CommandFactory{
 		"table": func() (cli.Command, error) {
@@ -121,11 +138,79 @@ func main() {
 		},
 	}
 
+	if ok, path := HasConfigYaml(); ok { // Read option from yml file
+		raw, err := ioutil.ReadFile(path)
+		if err != nil {
+			logger.Fatalf("%s", err.Error())
+			os.Exit(1)
+		}
+		// Parse config.yml as T structure
+		t := T{}
+		err = yaml.Unmarshal(raw, &t)
+		if err != nil {
+			logger.Fatalf("%s", err.Error())
+			os.Exit(1)
+		}
+		subcommand := t.OptionsLine()
+		argsFiles := RemoveString(os.Args[1:], path)
+		c.Args = append(subcommand, argsFiles...)
+		fmt.Printf("%v", c.Args)
+	} else { // Read option from command line
+		c.Args = os.Args[1:]
+	}
+
 	exitCode, err := c.Run()
 	if err != nil {
 		fmt.Printf("Failed to execute: %s\n", err.Error())
 	}
 	os.Exit(exitCode)
+}
+
+// RemoveString removes "search" word from "ss"
+func RemoveString(ss []string, search string) (rs []string) {
+	for _, s := range ss {
+		if s != search {
+			rs = append(rs, s)
+		}
+	}
+	return
+}
+
+// HasConfigYaml checks args has config.yml file
+func HasConfigYaml() (bool, string) {
+	for _, s := range os.Args {
+		if filepath.Base(s) == CONFIGYAML {
+			return true, s
+		}
+	}
+	return false, ""
+}
+
+// OptionsLine create like command line options `-opt + option`
+func (t T) OptionsLine() (ss []string) {
+	ss = []string{t.Subcommand}
+	if t.Options.C != "" {
+		ss = append(ss, "-c", t.Options.C)
+	}
+	if t.Options.Format != "" {
+		ss = append(ss, "-format", t.Options.Format)
+	}
+	if t.Options.Show != "" {
+		ss = append(ss, "-show", t.Options.Show)
+	}
+	if t.Options.D != "" {
+		ss = append(ss, "-d", t.Options.D)
+	}
+	if t.Options.Debug != "" {
+		ss = append(ss, "-debug", t.Options.Debug)
+	}
+	ss = append(ss, func() (f []string) {
+		for _, s := range t.Options.Field {
+			f = append(f, "-f", s)
+		}
+		return
+	}()...) // append [ -f 100-200 -f 300-500 ]
+	return
 }
 
 /* Table subcommand */

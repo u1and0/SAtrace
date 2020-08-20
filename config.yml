@@ -1,0 +1,16 @@
+# subcommandはどれかひとつ選ぶ
+# #でコメントアウト
+# subcommand: table
+subcommand: elen
+# subcommand: peak
+# オプションは複数必要
+options:
+    field:
+        - 100-200
+        - 300-500
+    c: "2"
+    format: "%e"
+    show: "date,center,noisefloor"
+    debug: false
+    # d: 10
+output: "hoge.csv"
