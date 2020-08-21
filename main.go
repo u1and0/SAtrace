@@ -36,6 +36,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/csv"
 	"errors"
 	"flag"
 	"fmt"
@@ -75,6 +76,8 @@ var (
 	delim string
 	// show is string of format of columns
 	show string
+	// output is CSV filename
+	output string
 	// delta use peak search value lower by delta
 	delta float64
 	// debug mode
@@ -83,6 +86,10 @@ var (
 	wg sync.WaitGroup
 	// logger print to stdout
 	logger = log.New(os.Stdout, "", 0)
+	// oo is chain of OutRow for print out to csv file
+	oo [][]string
+	// mutex lock concurrency []OutRow
+	mutex = &sync.Mutex{}
 )
 
 type (
@@ -118,8 +125,8 @@ type (
 			Show   string     `yaml:"show"`
 			D      string     `yaml:"d"`
 			Debug  bool       `yaml:"debug"`
+			Output string     `yaml:"output"`
 		}
-		Output string `yaml:"output"`
 	}
 )
 
@@ -201,6 +208,9 @@ func (t T) OptionsLine() (ss []string) {
 	if t.Options.D != "" {
 		ss = append(ss, "-d", t.Options.D)
 	}
+	if t.Options.Output != "" {
+		ss = append(ss, "-output", t.Options.Output)
+	}
 	if t.Options.Debug {
 		ss = append(ss, "-debug")
 	}
@@ -235,6 +245,7 @@ func (e *TableCommand) Run(args []string) int {
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
 	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
 	flags.StringVar(&show, "show", "date,center,noise", "Print columns separated comma")
+	flags.StringVar(&output, "output", "", "Write out csv file path")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -333,6 +344,7 @@ func (e *ElenCommand) Run(args []string) int {
 	flags.IntVar(&usecol, "c", 1, "Column of using calculation")
 	flags.StringVar(&format, "format", "%f", `Print format %f, %e, %E, ...)`)
 	flags.StringVar(&show, "show", "date,center,noise", "Print columns separated comma")
+	flags.StringVar(&output, "output", "", "Write out csv file path")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1
@@ -359,10 +371,32 @@ func (e *ElenCommand) Run(args []string) int {
 			if err != nil {
 				panic(err)
 			}
-			logger.Println(o)
+			if output != "" { // Output CSV
+				mutex.Lock()
+				oo = append(oo, strings.Split(o.String(), ","))
+				mutex.Unlock()
+			} else { // Output STDOUT
+				logger.Println(o)
+			}
 		}(filename)
 	}
 	wg.Wait()
+	if output != "" { // Write out CSV file
+		file, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			log.Fatalf("error: %v\n", err)
+		}
+		err = file.Truncate(0) // ファイルを空っぽにする(実行2回目以降用)
+		if err != nil {
+			log.Fatalf("error: %v\n", err)
+		}
+		defer file.Close()
+		writer := csv.NewWriter(file)
+		for _, r := range oo {
+			writer.Write(r)
+		}
+		writer.Flush()
+	}
 	return 0
 }
 
@@ -436,6 +470,7 @@ func (e *PeakCommand) Run(args []string) int {
 	flags.StringVar(&format, "format", "%f", `Print format (%f, %.3f, %e, %E...)`)
 	flags.Float64Var(&delta, "d", 1, "Use peak search value lower by delta")
 	flags.StringVar(&show, "show", "date,center,noise", "Print columns separated comma")
+	flags.StringVar(&output, "output", "", "Write out csv file path")
 	flags.BoolVar(&debug, "debug", false, "Debug mode")
 	if err := flags.Parse(args); err != nil {
 		return 1

@@ -13,4 +13,4 @@ options:
     show: "date,center"
     debug: false
     # d: 10
-output: "hoge.csv"
+    output: "hogehoge.csv"
