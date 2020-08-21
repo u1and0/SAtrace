@@ -164,7 +164,6 @@ func main() {
 	} else { // Read option from command line
 		c.Args = os.Args[1:]
 	}
-	fmt.Printf("%v", c.Args)
 
 	exitCode, err := c.Run()
 	if err != nil {
@@ -350,8 +349,28 @@ func (e *ElenCommand) Run(args []string) int {
 		return 1
 	}
 	// Add header
-	logger.Printf("%s", strings.Join(append([]string{show}, field...), ",")) // Unite show & filed
-
+	header := strings.Join(append([]string{show}, field...), ",") // Unite show & filed
+	if output != "" {
+		logger.Printf("%s", header)
+	} else {
+		file, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			log.Fatalf("error: %v\n", err)
+		}
+		err = file.Truncate(0) // ファイルを空っぽにする(実行2回目以降用)
+		if err != nil {
+			log.Fatalf("error: %v\n", err)
+		}
+		defer file.Close()
+		writer := csv.NewWriter(file)
+		writer.Write(strings.Split(header, ","))
+		defer func() {
+			for _, r := range oo {
+				writer.Write(r)
+			}
+			writer.Flush()
+		}()
+	}
 	paths, err := parseStarPath(flags.Args())
 	if err != nil {
 		logger.Printf("error: %v", err)
@@ -371,7 +390,7 @@ func (e *ElenCommand) Run(args []string) int {
 			if err != nil {
 				panic(err)
 			}
-			if output != "" { // Output CSV
+			if output != "" { // Append to slice to dump CSV
 				mutex.Lock()
 				oo = append(oo, strings.Split(o.String(), ","))
 				mutex.Unlock()
@@ -381,22 +400,6 @@ func (e *ElenCommand) Run(args []string) int {
 		}(filename)
 	}
 	wg.Wait()
-	if output != "" { // Write out CSV file
-		file, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE, 0666)
-		if err != nil {
-			log.Fatalf("error: %v\n", err)
-		}
-		err = file.Truncate(0) // ファイルを空っぽにする(実行2回目以降用)
-		if err != nil {
-			log.Fatalf("error: %v\n", err)
-		}
-		defer file.Close()
-		writer := csv.NewWriter(file)
-		for _, r := range oo {
-			writer.Write(r)
-		}
-		writer.Flush()
-	}
 	return 0
 }
 
